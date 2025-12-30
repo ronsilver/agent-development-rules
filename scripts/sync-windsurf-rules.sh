@@ -7,7 +7,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "${SCRIPT_DIR}")"
 RULES_DIR="${REPO_ROOT}/windsurf/rules"
-TARGET_FILE="${HOME}/.codeium/windsurf/memories/global_rules.md"
+TARGET_FILE="${HOME}/.codeium/memories/global_rules.md"
 
 # Colores para output
 RED='\033[0;31m'

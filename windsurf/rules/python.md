@@ -5,84 +5,202 @@ globs: ["*.py", "requirements*.txt", "pyproject.toml"]
 
 # Python Best Practices
 
-## Formato
-
-- Usar Black para formateo
-- Line length: 88
-
 ## Type Hints
 
+### Obligatorio en Funciones Públicas
 ```python
+from collections.abc import Sequence
+
 def get_user(user_id: int) -> User | None:
+    """Retrieve user by ID."""
     ...
 
-def process(items: list[str]) -> dict[str, int]:
+def process_items(items: Sequence[str]) -> dict[str, int]:
+    """Process items and return counts."""
+    ...
+
+def create_order(
+    user_id: int,
+    items: list[OrderItem],
+    *,
+    priority: bool = False,
+) -> Order:
+    """Create a new order for user."""
     ...
 ```
 
-## Docstrings
+### Tipos Complejos
+```python
+from typing import TypeAlias, TypedDict, Literal
+
+# Type aliases para claridad
+UserID: TypeAlias = int
+JSON: TypeAlias = dict[str, "JSON"] | list["JSON"] | str | int | float | bool | None
+
+# TypedDict para estructuras conocidas
+class UserConfig(TypedDict):
+    name: str
+    email: str
+    active: bool
+
+# Literal para valores específicos
+Environment = Literal["dev", "staging", "prod"]
+```
+
+## Docstrings (Google Style)
 
 ```python
-def calculate(value: float, rate: float = 0.1) -> float:
-    """Calculate the result with rate.
-    
+def calculate_discount(
+    amount: float,
+    rate: float = 0.1,
+    *,
+    max_discount: float | None = None,
+) -> float:
+    """Calculate discounted amount.
+
     Args:
-        value: Base value.
-        rate: Rate to apply (default 10%).
-    
+        amount: Original amount before discount.
+        rate: Discount rate as decimal (default 10%).
+        max_discount: Maximum discount cap, if any.
+
     Returns:
-        Calculated result.
+        Final amount after applying discount.
+
+    Raises:
+        ValueError: If amount is negative.
+
+    Example:
+        >>> calculate_discount(100, 0.2)
+        80.0
     """
+    if amount < 0:
+        raise ValueError("Amount cannot be negative")
+    
+    discount = amount * rate
+    if max_discount is not None:
+        discount = min(discount, max_discount)
+    
+    return amount - discount
 ```
 
-## Estructura
+## Modelos de Datos
+
+```python
+from dataclasses import dataclass, field
+from pydantic import BaseModel, Field, field_validator
+
+# Dataclass para datos simples internos
+@dataclass
+class Point:
+    x: float
+    y: float
+    label: str = ""
+
+# Pydantic para validación de inputs
+class UserCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    email: str = Field(..., pattern=r"^[\w.-]+@[\w.-]+\.\w+$")
+    age: int = Field(..., ge=0, le=150)
+
+    @field_validator("name")
+    @classmethod
+    def name_must_not_be_empty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("Name cannot be empty or whitespace")
+        return v.strip()
+```
+
+## Paths - Usar pathlib
+
+```python
+from pathlib import Path
+
+# ✅ Correcto
+config_path = Path(__file__).parent / "config.yaml"
+if config_path.exists():
+    content = config_path.read_text(encoding="utf-8")
+
+data_dir = Path.home() / ".myapp" / "data"
+data_dir.mkdir(parents=True, exist_ok=True)
+
+# ❌ Evitar
+import os
+config_path = os.path.join(os.path.dirname(__file__), "config.yaml")
+```
+
+## Async/Await
+
+```python
+import asyncio
+import httpx
+
+async def fetch_user(client: httpx.AsyncClient, user_id: int) -> User:
+    """Fetch user from API."""
+    response = await client.get(f"/users/{user_id}")
+    response.raise_for_status()
+    return User(**response.json())
+
+async def fetch_all_users(user_ids: list[int]) -> list[User]:
+    """Fetch multiple users concurrently."""
+    async with httpx.AsyncClient(base_url=API_URL) as client:
+        tasks = [fetch_user(client, uid) for uid in user_ids]
+        return await asyncio.gather(*tasks)
+```
+
+## Estructura de Proyecto
 
 ```
 project/
 ├── src/
 │   └── package/
 │       ├── __init__.py
-│       └── main.py
+│       ├── main.py
+│       ├── models.py
+│       ├── services/
+│       └── utils/
 ├── tests/
-├── requirements.txt
-└── pyproject.toml
+│   ├── conftest.py
+│   └── test_main.py
+├── pyproject.toml
+└── requirements.txt
 ```
 
 ## Dependencias
 
 ```
 # requirements.txt - versiones específicas
-fastapi==0.104.1
-pydantic==2.5.2
+fastapi==0.109.0
+pydantic==2.5.3
+httpx==0.26.0
+uvicorn[standard]==0.27.0
 ```
 
-## Paths
-
-Usar `pathlib`:
-```python
-from pathlib import Path
-config = Path(__file__).parent / "config.yaml"
-```
-
-## Testing
+## Comandos de Validación
 
 ```bash
-pytest tests/ -v
-pytest --cov=src
-```
-
-## Linting
-
-```bash
+# Formateo
 black .
+isort .
+
+# Linting
 ruff check .
 mypy src/
+
+# Testing
+pytest tests/ -v
+pytest --cov=src --cov-report=term-missing
+
+# Seguridad
+pip-audit
+bandit -r src/
 ```
 
-## Virtual Environments
+## Anti-Patrones
 
-```bash
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
+| Anti-Patrón | Solución |
+|-------------|----------|
+| `except Exception: pass` | Manejar errores específicos |
+| Mutable default args | Usar `None` y crear en función |
+| `import *` | Imports explícitos |
+| Strings para paths | Usar `pathlib.Path` |
+| Sin type hints | Agregar en funciones públicas |

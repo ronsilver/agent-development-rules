@@ -7,7 +7,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "${SCRIPT_DIR}")"
 WORKFLOWS_DIR="${REPO_ROOT}/windsurf/workflows"
-TARGET_FILE="${HOME}/.codeium/windsurf/global_workflows/global-default.md"
+TARGET_FILE="${HOME}/.codeium/global_workflows/default.md"
 
 # Colores para output
 RED='\033[0;31m'
