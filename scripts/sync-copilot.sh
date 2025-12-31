@@ -7,7 +7,16 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "${SCRIPT_DIR}")"
 COPILOT_DIR="${REPO_ROOT}/github-copilot"
-TARGET_DIR="${HOME}/.config/github-copilot/intellij"
+# Directorios destino fijos
+TARGET_DIRS=(
+  "${HOME}/.config/github-copilot/intellij"
+  "${HOME}/Library/Application Support/Code/User/prompts"
+)
+
+# Directorios con glob pattern (se expanden en tiempo de ejecución)
+TARGET_GLOB_PATTERNS=(
+  "${HOME}/.vscode/extensions/github.copilot-chat-*/assets/prompts"
+)
 
 # Colores para output
 RED='\033[0;31m'
@@ -33,42 +42,12 @@ if [[ ! -d "${COPILOT_DIR}" ]]; then
     exit 1
 fi
 
-# Crear directorio destino si no existe
-mkdir -p "${TARGET_DIR}"
-
 # ============================================================================
-# 1. Sincronizar global-copilot-instructions.md
+# Definir archivos de instrucciones y prompts
 # ============================================================================
-log_info "Sincronizando global-copilot-instructions.md..."
-
-if [[ -f "${COPILOT_DIR}/copilot-instructions.md" ]]; then
-    cp "${COPILOT_DIR}/copilot-instructions.md" "${TARGET_DIR}/global-copilot-instructions.md"
-    log_info "  → global-copilot-instructions.md actualizado"
-else
-    log_warn "  → copilot-instructions.md no encontrado"
-fi
-
-# ============================================================================
-# 2. Sincronizar global-git-commit-instructions.md
-# ============================================================================
-log_info "Sincronizando global-git-commit-instructions.md..."
-
-if [[ -f "${COPILOT_DIR}/git-commit-instructions.md" ]]; then
-    cp "${COPILOT_DIR}/git-commit-instructions.md" "${TARGET_DIR}/global-git-commit-instructions.md"
-    log_info "  → global-git-commit-instructions.md actualizado"
-else
-    log_warn "  → git-commit-instructions.md no encontrado"
-fi
-
-# ============================================================================
-# 3. Consolidar instructions/*.instructions.md → Default.instructions.md
-# ============================================================================
-log_info "Consolidando instructions en Default.instructions.md..."
-
 INSTRUCTIONS_DIR="${COPILOT_DIR}/instructions"
-TARGET_INSTRUCTIONS="${TARGET_DIR}/Default.instructions.md"
+PROMPTS_DIR="${COPILOT_DIR}/prompts"
 
-# Orden de archivos de instrucciones
 INSTRUCTION_FILES=(
     "terraform.instructions.md"
     "go.instructions.md"
@@ -79,40 +58,6 @@ INSTRUCTION_FILES=(
     "kubernetes.instructions.md"
 )
 
-{
-    echo "---"
-    echo "applyTo: '**'"
-    echo "description: 'Instrucciones globales de desarrollo'"
-    echo "---"
-    echo ""
-    echo "<!-- Generado automáticamente por sync-copilot.sh -->"
-    echo "<!-- Última actualización: $(date '+%Y-%m-%d %H:%M:%S') -->"
-    echo ""
-    
-    for instruction_file in "${INSTRUCTION_FILES[@]}"; do
-        file_path="${INSTRUCTIONS_DIR}/${instruction_file}"
-        if [[ -f "${file_path}" ]]; then
-            cat "${file_path}"
-            echo ""
-            echo "---"
-            echo ""
-        else
-            log_warn "  → Archivo no encontrado: ${instruction_file}"
-        fi
-    done
-} > "${TARGET_INSTRUCTIONS}"
-
-log_info "  → Default.instructions.md actualizado (${#INSTRUCTION_FILES[@]} archivos)"
-
-# ============================================================================
-# 4. Consolidar prompts/*.prompt.md → default.prompt.md
-# ============================================================================
-log_info "Consolidando prompts en default.prompt.md..."
-
-PROMPTS_DIR="${COPILOT_DIR}/prompts"
-TARGET_PROMPTS="${TARGET_DIR}/default.prompt.md"
-
-# Orden de archivos de prompts
 PROMPT_FILES=(
     "validate.prompt.md"
     "review.prompt.md"
@@ -122,38 +67,106 @@ PROMPT_FILES=(
     "security.prompt.md"
 )
 
-{
-    echo "---"
-    echo "description: 'Prompts reutilizables para tareas comunes'"
-    echo "---"
-    echo ""
-    echo "<!-- Generado automáticamente por sync-copilot.sh -->"
-    echo "<!-- Última actualización: $(date '+%Y-%m-%d %H:%M:%S') -->"
-    echo ""
+# ============================================================================
+# Función para sincronizar a un directorio destino
+# ============================================================================
+sync_to_target() {
+    local target_dir="$1"
     
-    for prompt_file in "${PROMPT_FILES[@]}"; do
-        file_path="${PROMPTS_DIR}/${prompt_file}"
-        if [[ -f "${file_path}" ]]; then
-            cat "${file_path}"
-            echo ""
-            echo "---"
-            echo ""
-        else
-            log_warn "  → Archivo no encontrado: ${prompt_file}"
-        fi
-    done
-} > "${TARGET_PROMPTS}"
+    mkdir -p "${target_dir}"
+    
+    # Copiar global-copilot-instructions.md
+    if [[ -f "${COPILOT_DIR}/copilot-instructions.md" ]]; then
+        cp "${COPILOT_DIR}/copilot-instructions.md" "${target_dir}/global-copilot-instructions.md"
+    fi
+    
+    # Copiar global-git-commit-instructions.md
+    if [[ -f "${COPILOT_DIR}/git-commit-instructions.md" ]]; then
+        cp "${COPILOT_DIR}/git-commit-instructions.md" "${target_dir}/global-git-commit-instructions.md"
+    fi
+    
+    # Generar Default.instructions.md
+    {
+        echo "---"
+        echo "applyTo: '**'"
+        echo "description: 'Instrucciones globales de desarrollo'"
+        echo "---"
+        echo ""
+        echo "<!-- Generado automáticamente por sync-copilot.sh -->"
+        echo "<!-- Última actualización: $(date '+%Y-%m-%d %H:%M:%S') -->"
+        echo ""
+        
+        for instruction_file in "${INSTRUCTION_FILES[@]}"; do
+            local file_path="${INSTRUCTIONS_DIR}/${instruction_file}"
+            if [[ -f "${file_path}" ]]; then
+                cat "${file_path}"
+                echo ""
+                echo "---"
+                echo ""
+            fi
+        done
+    } > "${target_dir}/Default.instructions.md"
+    
+    # Generar default.prompt.md
+    {
+        echo "---"
+        echo "description: 'Prompts reutilizables para tareas comunes'"
+        echo "---"
+        echo ""
+        echo "<!-- Generado automáticamente por sync-copilot.sh -->"
+        echo "<!-- Última actualización: $(date '+%Y-%m-%d %H:%M:%S') -->"
+        echo ""
+        
+        for prompt_file in "${PROMPT_FILES[@]}"; do
+            local file_path="${PROMPTS_DIR}/${prompt_file}"
+            if [[ -f "${file_path}" ]]; then
+                cat "${file_path}"
+                echo ""
+                echo "---"
+                echo ""
+            fi
+        done
+    } > "${target_dir}/default.prompt.md"
+    
+    log_info "  → Sincronizado: ${target_dir}"
+}
 
-log_info "  → default.prompt.md actualizado (${#PROMPT_FILES[@]} archivos)"
+# ============================================================================
+# 1. Sincronizar a directorios fijos
+# ============================================================================
+log_info "Sincronizando a directorios fijos..."
+
+for target_dir in "${TARGET_DIRS[@]}"; do
+    sync_to_target "${target_dir}"
+done
+
+# ============================================================================
+# 2. Sincronizar a directorios con glob patterns
+# ============================================================================
+log_info "Sincronizando a directorios con glob patterns..."
+
+for pattern in "${TARGET_GLOB_PATTERNS[@]}"; do
+    shopt -s nullglob
+    expanded_dirs=($pattern)
+    shopt -u nullglob
+    
+    if [[ ${#expanded_dirs[@]} -eq 0 ]]; then
+        log_warn "  → No se encontraron directorios para: ${pattern}"
+        continue
+    fi
+    
+    for target_dir in "${expanded_dirs[@]}"; do
+        sync_to_target "${target_dir}"
+    done
+done
 
 # ============================================================================
 # Resumen
 # ============================================================================
 echo ""
-log_info "Sincronización completada:"
-log_info "  Target: ${TARGET_DIR}"
-log_info "  Archivos actualizados:"
-log_info "    - global-copilot-instructions.md"
-log_info "    - global-git-commit-instructions.md"
-log_info "    - Default.instructions.md (consolidado)"
-log_info "    - default.prompt.md (consolidado)"
+log_info "Sincronización completada"
+log_info "Archivos generados por destino:"
+log_info "  - global-copilot-instructions.md"
+log_info "  - global-git-commit-instructions.md"
+log_info "  - Default.instructions.md (consolidado)"
+log_info "  - default.prompt.md (consolidado)"
