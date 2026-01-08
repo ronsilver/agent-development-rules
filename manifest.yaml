@@ -1,0 +1,156 @@
+# =============================================================================
+# Agent Rules - Manifest de Configuración
+# =============================================================================
+# Este archivo define la configuración central para sincronizar reglas
+# a diferentes agentes de AI (Windsurf, GitHub Copilot, Cursor, etc.)
+#
+# Uso: ./scripts/sync.sh [--agent <nombre>] [--dry-run]
+# =============================================================================
+
+version: "1.0"
+
+# =============================================================================
+# Archivos Fuente (reglas centralizadas)
+# =============================================================================
+
+rules:
+  source_dir: "rules"
+  files:
+    - global.md
+    - git.md
+    - security.md
+    - testing.md
+    - performance.md
+    - scalability.md
+    - solid.md
+    - operational-excellence.md
+    - documentation.md
+    - terraform.md
+    - aws.md
+    - go.md
+    - python.md
+    - nodejs.md
+    - bash.md
+    - docker.md
+    - kubernetes.md
+
+workflows:
+  source_dir: "workflows"
+  files:
+    - validate.md
+    - test.md
+    - lint.md
+    - pre-push.md
+    - pr-review.md
+    - fix-pr-comments.md
+    - terraform-module.md
+    - docker-build.md
+    - k8s-validate.md
+    - security-check.md
+
+prompts:
+  source_dir: "prompts"
+  files:
+    - review.prompt.md
+    - security.prompt.md
+    - test.prompt.md
+    - refactor.prompt.md
+    - document.prompt.md
+    - validate.prompt.md
+
+# =============================================================================
+# Configuración por Agente
+# =============================================================================
+
+agents:
+  windsurf:
+    enabled: true
+    description: "Windsurf IDE / Codeium Cascade"
+    targets:
+      rules:
+        path: "${HOME}/.codeium/memories/global_rules.md"
+        format: merged
+        strip_frontmatter: true
+        header: |
+          ---
+          trigger: always
+          ---
+          
+          # Reglas de Desarrollo para Windsurf/Cascade
+          
+          <!-- Generado automáticamente por sync.sh -->
+          <!-- Última actualización: {{timestamp}} -->
+      
+      workflows:
+        path: "${HOME}/.codeium/global_workflows/default.md"
+        format: merged
+        strip_frontmatter: true
+        header: |
+          ---
+          name: global-workflows
+          description: Workflows globales para Windsurf
+          ---
+          
+          # Workflows Globales
+          
+          <!-- Generado automáticamente por sync.sh -->
+          <!-- Última actualización: {{timestamp}} -->
+
+  github-copilot:
+    enabled: true
+    description: "GitHub Copilot (VS Code / IntelliJ)"
+    targets:
+      rules:
+        paths:
+          - "${HOME}/.config/github-copilot/intellij"
+          - "${HOME}/Library/Application Support/Code/User/prompts"
+        glob_paths:
+          - "${HOME}/.vscode/extensions/github.copilot-chat-*/assets/prompts"
+        format: merged
+        output_filename: "Default.instructions.md"
+        strip_frontmatter: true
+        header: |
+          ---
+          applyTo: "**"
+          description: Instrucciones globales de desarrollo
+          ---
+          
+          <!-- Generado automáticamente por sync.sh -->
+          <!-- Última actualización: {{timestamp}} -->
+      
+      prompts:
+        paths:
+          - "${HOME}/.config/github-copilot/intellij"
+          - "${HOME}/Library/Application Support/Code/User/prompts"
+        format: merged
+        output_filename: "default.prompt.md"
+        strip_frontmatter: true
+        header: |
+          ---
+          description: Prompts reutilizables para tareas comunes
+          ---
+          
+          <!-- Generado automáticamente por sync.sh -->
+          <!-- Última actualización: {{timestamp}} -->
+
+  cursor:
+    enabled: false
+    description: "Cursor IDE"
+    targets:
+      rules:
+        path: "${HOME}/.cursor/rules/global.md"
+        format: merged
+        strip_frontmatter: true
+
+  local-project:
+    enabled: false
+    description: "Copiar reglas a proyecto local"
+    targets:
+      rules:
+        path: ".windsurf/rules"
+        format: individual
+        strip_frontmatter: false
+      workflows:
+        path: ".windsurf/workflows"
+        format: individual
+        strip_frontmatter: false
