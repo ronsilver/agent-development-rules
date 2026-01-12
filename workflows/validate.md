@@ -1,74 +1,57 @@
 ---
 name: validate
-description: Validar código del proyecto actual
+description: Validate current project code
 ---
 
-# Workflow: Validar
+# Workflow: Validate
 
-Validar el código del proyecto detectando automáticamente el tipo.
+Execute validation tools based on project type.
 
-## Detección de Proyecto
+## Detection
 
-| Archivos Presentes | Tipo de Proyecto |
-|-------------------|------------------|
+| File Marker | Project Type |
+|-------------|--------------|
 | `*.tf` | Terraform |
 | `go.mod` | Go |
 | `package.json` | Node.js/TypeScript |
-| `requirements.txt`, `pyproject.toml` | Python |
+| `pyproject.toml` | Python |
 | `Dockerfile` | Docker |
 | `Chart.yaml` | Helm |
 
-## Comandos por Tipo
+## Commands
 
 ### Terraform
 ```bash
 terraform fmt -recursive -check
 terraform init -backend=false
 terraform validate
-terraform test  # si existe tests/
 ```
 
 ### Go
 ```bash
 go fmt ./...
-go vet ./...
-golangci-lint run  # si está instalado
+golangci-lint run
 go test ./... -race
 ```
 
 ### Python
 ```bash
-black --check .
 ruff check .
-mypy src/  # si existe src/
+black --check .
+mypy src/
 pytest
 ```
 
-### Node.js/TypeScript
+### Node.js
 ```bash
-npm run typecheck  # si existe script
+npm run typecheck
 npm run lint
 npm test
 ```
 
-### Docker
-```bash
-hadolint Dockerfile
-```
+## Execution Steps
 
-### Helm
-```bash
-helm lint ./chart
-helm template release ./chart -f values.yaml
-```
-
-## Pasos del Workflow
-
-1. **Detectar tipo de proyecto** por archivos presentes
-2. **Ejecutar validaciones** en orden
-3. **Verificar git status** para archivos no trackeados
-4. **Reportar resultados**:
-   - ✅ Validaciones exitosas
-   - ❌ Errores con archivo y línea
-   - ⚠️ Warnings relevantes
-5. **Sugerir fixes** para errores comunes
+1.  **Detect**.
+2.  **Execute** commands in order.
+3.  **STOP** immediately if any command fails.
+4.  **Report** success or failure (with line numbers).

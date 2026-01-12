@@ -1,56 +1,56 @@
 # Review
 
-Revisar el código seleccionado o los cambios recientes para identificar problemas.
+Review the selected code or recent changes to identify issues.
 
-## Categorías de Revisión
+## Review Categories
 
-### 1. Errores y Bugs
-- Null/undefined references
-- Race conditions y problemas de concurrencia
-- Off-by-one errors
-- Resource leaks (conexiones, file handles)
-- Error handling incompleto
+### 1. Bugs & Correctness
+- Null/undefined references.
+- Race conditions / Concurrency issues.
+- Off-by-one errors.
+- Resource leaks (connections, file handles).
+- Incomplete error handling.
 
-### 2. Seguridad
-- Secrets o credenciales hardcodeadas
-- Inputs sin validar/sanitizar
-- SQL injection, XSS, path traversal
-- Permisos excesivos
-- Datos sensibles en logs
+### 2. Security (OWASP)
+- Hardcoded secrets or credentials.
+- Unvalidated/Unsanitized inputs.
+- SQL Injection, XSS, Path Traversal.
+- Excessive permissions.
+- Sensitive data in logs.
 
 ### 3. Performance
-- N+1 queries
-- Loops innecesarios o ineficientes
-- Allocaciones excesivas
-- Missing indexes
-- Llamadas síncronas que deberían ser async
+- N+1 queries.
+- Unnecessary loops / O(n^2) or worse.
+- Excessive allocations.
+- Missing database indexes.
+- Blocking synchronous calls.
 
-### 4. Mantenibilidad
-- Funciones muy largas (>50 líneas)
-- Código duplicado
-- Naming confuso o inconsistente
-- Acoplamiento excesivo
-- Falta de tests
+### 4. Maintainability
+- Long functions (>50 lines).
+- Duplicated code (DRY violation).
+- Confusing or inconsistent naming.
+- High coupling.
+- Lack of tests.
 
-## Formato de Reporte
+## Report Format
 
-Para cada issue encontrado:
+For each issue found:
 
+```markdown
+## [SEVERITY] Issue Title
+
+**File:** path/to/file.ext:Line
+**Category:** Security | Performance | Bug | Maintainability
+
+**Problem:**
+Description of the issue.
+
+**Suggestion:**
+How to fix it (provide code snippet if applicable).
 ```
-## [SEVERIDAD] Título del problema
 
-**Archivo:** path/to/file.ext:Línea
-**Categoría:** Seguridad | Performance | Bug | Mantenibilidad
+## Severity Levels
 
-**Problema:**
-Descripción del issue.
-
-**Sugerencia:**
-Cómo corregirlo con ejemplo de código si aplica.
-```
-
-## Severidades
-
-- 🔴 **CRITICAL** - Debe corregirse antes de merge
-- 🟠 **WARNING** - Debería corregirse
-- 🟡 **INFO** - Sugerencia de mejora
+- 🔴 **CRITICAL**: Must fix before merge (Security/Data Loss).
+- 🟠 **WARNING**: Should fix (Tech Debt/Performance).
+- 🟡 **INFO**: Suggestion / Nitpick.

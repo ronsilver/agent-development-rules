@@ -7,241 +7,329 @@ globs: ["*.go", "go.mod", "go.sum"]
 
 ## Error Handling
 
-### Regla Principal
-Siempre manejar errores explícitamente. Nunca ignorar con `_`.
+### Core Rule - NO IGNORED ERRORS
+Never use `_` to ignore errors. If an error truly doesn't matter, document **explicitly** why.
 
-```go
-// ✅ Correcto - Error con contexto
-if err != nil {
-    return fmt.Errorf("failed to create user %s: %w", username, err)
-}
-
-// ✅ Correcto - Errores sentinel
-if errors.Is(err, ErrNotFound) {
-    return nil  // Handle gracefully
-}
-
-// ❌ Incorrecto - Error ignorado
-result, _ := doSomething()
-
-// ❌ Incorrecto - Error sin contexto
-if err != nil {
-    return err
-}
-```
+- **Forbidden**: `val, _ := fn()`
+- **Allowed**: `val, err := fn(); if err != nil { ... }`
 
 ### Error Wrapping
+Use `%w` for wrapping errors to preserve context.
 ```go
-// Wrap con contexto para debugging
 if err != nil {
     return fmt.Errorf("process order %s: %w", orderID, err)
 }
-
-// Definir errores sentinel
-var (
-    ErrNotFound     = errors.New("not found")
-    ErrUnauthorized = errors.New("unauthorized")
-)
 ```
 
-### No Panic en Producción
-```go
-// ❌ Evitar
-panic(err)
-log.Fatal(err)  // Solo aceptable en main() para startup
+### No Panics
+Do not use `panic` in libraries or production code. Return errors instead.
 
-// ✅ Preferir
-return fmt.Errorf("critical error: %w", err)
+## Project Structure - Standard Layout
+
+Follow [golang-standards/project-layout](https://github.com/golang-standards/project-layout).
+
+- `cmd/`: Main applications.
+- `internal/`: Private application and library code.
+- `pkg/`: Library code usable by external apps.
+- `api/`: OpenAPI/Swagger specs.
+
+## Mandatory Verification
+
+Before any commit or PR, you **MUST** run:
+```bash
+go fmt ./...                          # Formatting
+go vet ./...                          # Vetting
+golangci-lint run                     # Linting
+go test -race -cover ./...            # Testing with race detector
+go test -coverprofile=coverage.out    # Coverage report
 ```
 
-## Naming Conventions
+## Linter Configuration
 
-| Elemento | Convención | Ejemplo |
-|----------|------------|----------|
-| Packages | lowercase, singular, sin `_` | `user`, `auth`, `httputil` |
-| Interfaces | -er suffix cuando aplique | `Reader`, `Validator`, `UserService` |
-| Exported | PascalCase | `CreateUser`, `MaxRetries` |
-| Unexported | camelCase | `parseConfig`, `defaultTimeout` |
-| Constantes | PascalCase | `MaxConnections`, `DefaultPort` |
-| Receivers | 1-2 letras consistentes | `func (u *User)`, `func (s *Service)` |
-| Acronyms | Todo mayúsculas o minúsculas | `HTTPServer`, `xmlParser` |
+### golangci-lint v2 (2025) - `.golangci.yml`
 
-### Variables por Scope
-```go
-// Scope pequeño: nombres cortos
-for i, v := range items { }
-if err := validate(); err != nil { }
+```yaml
+# golangci-lint v2 configuration
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
 
-// Scope grande: nombres descriptivos
-var userSessionTimeout = 30 * time.Minute
-var maxConcurrentRequests = 100
+linters:
+  # New v2 syntax (replaces enable-all/disable-all)
+  default: standard
+  enable:
+    # Core linters
+    - errcheck      # Check for unchecked errors
+    - gosimple      # Simplify code suggestions
+    - govet         # Vet examines Go source code
+    - ineffassign   # Detect ineffectual assignments
+    - staticcheck   # Staticcheck checks
+    - unused        # Check for unused constants, variables, functions
+
+    # Code quality
+    - revive        # Fast, configurable, extensible linter
+    - gocyclo       # Cyclomatic complexity
+    - misspell      # Spell checker
+    - unconvert     # Remove unnecessary conversions
+    - unparam       # Reports unused function parameters
+    - gofmt         # Check formatting
+    - goimports     # Check imports
+
+    # Security
+    - gosec         # Security problems scanner
+
+    # Best practices
+    - bodyclose     # Check HTTP response body closed
+    - noctx         # Finds HTTP requests without context
+    - errname       # Check error naming conventions
+    - errorlint     # Error wrapping issues
+    - gocritic      # Opinionated Go linter
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+
+  gocyclo:
+    min-complexity: 15
+
+  revive:
+    rules:
+      - name: var-naming
+      - name: exported
+      - name: error-return
+      - name: error-strings
+      - name: blank-imports
+
+  gosec:
+    excludes:
+      - G104  # Audit errors (covered by errcheck)
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
 ```
 
-## Context
+**Key Linters Explained:**
+- **errcheck**: Prevents ignored errors (`_` usage)
+- **gosec**: Security vulnerabilities (SQL injection, weak crypto)
+- **revive**: Configurable rules for code quality
+- **gocyclo**: Prevents overly complex functions (>15 complexity)
+- **bodyclose**: Ensures HTTP response bodies are closed
 
-```go
-// Siempre primer parámetro, propagar en llamadas
-func (s *Service) ProcessOrder(ctx context.Context, orderID string) error {
-    // Verificar cancelación
-    select {
-    case <-ctx.Done():
-        return ctx.Err()
-    default:
-    }
-
-    user, err := s.userRepo.GetByID(ctx, orderID)
-    if err != nil {
-        return fmt.Errorf("get user: %w", err)
-    }
-    
-    return s.notifier.Send(ctx, user)
-}
-
-// Context con timeout
-ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-defer cancel()
-```
-
-## Interfaces
-
-```go
-// Pequeñas: 1-3 métodos
-// Definir donde se USAN, no donde se implementan
-type UserRepository interface {
-    GetByID(ctx context.Context, id string) (*User, error)
-    Save(ctx context.Context, user *User) error
-}
-
-// Composición de interfaces
-type ReadWriter interface {
-    Reader
-    Writer
-}
-```
+## Security
+- Avoid `unsafe`.
+- Use `gosec` to scan code.
+- Sanitize SQL inputs (use parameter substitution, NEVER string concatenation).
+- Use `govulncheck ./...` to scan for known vulnerabilities.
 
 ## Testing
 
-### Table-Driven Tests
+### Test Coverage Requirements
+- **Critical Logic**: 90% coverage
+- **Public API**: 80% coverage
+- **Overall**: 70% coverage minimum
+
+```bash
+# Run tests with coverage
+go test -cover ./...
+
+# Generate detailed coverage report
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out
+
+# CI/CD: Fail if coverage drops
+go test -coverprofile=coverage.out ./...
+go tool cover -func=coverage.out | grep total | awk '{if ($3+0 < 70) exit 1}'
+```
+
+### Testing Frameworks
+
+#### Testify - Assertions & Mocking
+Install: `go get github.com/stretchr/testify`
+
+**Assertions** (testify/assert):
 ```go
-func TestCalculateDiscount(t *testing.T) {
+import (
+    "testing"
+    "github.com/stretchr/testify/assert"
+)
+
+func TestUserCreate(t *testing.T) {
+    user, err := CreateUser("john@example.com")
+
+    assert.NoError(t, err)
+    assert.NotNil(t, user)
+    assert.Equal(t, "john@example.com", user.Email)
+    assert.True(t, user.ID > 0)
+}
+```
+
+**Mocking** (testify/mock):
+```go
+import "github.com/stretchr/testify/mock"
+
+type MockRepository struct {
+    mock.Mock
+}
+
+func (m *MockRepository) GetUser(id int) (*User, error) {
+    args := m.Called(id)
+    return args.Get(0).(*User), args.Error(1)
+}
+
+func TestService(t *testing.T) {
+    mockRepo := new(MockRepository)
+    mockRepo.On("GetUser", 123).Return(&User{ID: 123}, nil)
+
+    service := NewService(mockRepo)
+    user, err := service.GetUser(123)
+
+    assert.NoError(t, err)
+    assert.Equal(t, 123, user.ID)
+    mockRepo.AssertExpectations(t)
+}
+```
+
+### Table-Driven Tests (Go Standard Pattern)
+
+**Pattern**:
+```go
+func TestCalculate(t *testing.T) {
     tests := []struct {
         name     string
-        amount   float64
-        tier     string
-        expected float64
+        input    int
+        expected int
         wantErr  bool
     }{
-        {"premium 10%", 100.0, "premium", 90.0, false},
-        {"standard no discount", 100.0, "standard", 100.0, false},
-        {"invalid tier", 100.0, "invalid", 0, true},
-        {"zero amount", 0, "premium", 0, false},
+        {
+            name:     "positive number",
+            input:    5,
+            expected: 10,
+            wantErr:  false,
+        },
+        {
+            name:     "negative number",
+            input:    -5,
+            expected: -10,
+            wantErr:  false,
+        },
+        {
+            name:     "zero",
+            input:    0,
+            expected: 0,
+            wantErr:  false,
+        },
+        {
+            name:     "overflow",
+            input:    math.MaxInt,
+            expected: 0,
+            wantErr:  true,
+        },
     }
 
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
-            got, err := CalculateDiscount(tt.amount, tt.tier)
-            
-            if (err != nil) != tt.wantErr {
-                t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
+            result, err := Calculate(tt.input)
+
+            if tt.wantErr {
+                assert.Error(t, err)
                 return
             }
-            
-            if got != tt.expected {
-                t.Errorf("got %v, want %v", got, tt.expected)
-            }
+
+            assert.NoError(t, err)
+            assert.Equal(t, tt.expected, result)
         })
     }
 }
 ```
 
-### Testify para Assertions
-```go
-import "github.com/stretchr/testify/assert"
+### Parallel Testing
 
-func TestUser(t *testing.T) {
-    user, err := CreateUser("test")
-    
-    assert.NoError(t, err)
-    assert.NotNil(t, user)
-    assert.Equal(t, "test", user.Name)
+```go
+func TestParallel(t *testing.T) {
+    tests := []struct {
+        name string
+        input int
+    }{
+        {"test1", 1},
+        {"test2", 2},
+    }
+
+    for _, tt := range tests {
+        tt := tt // Capture range variable
+        t.Run(tt.name, func(t *testing.T) {
+            t.Parallel() // Run tests in parallel
+            result := Process(tt.input)
+            assert.NotNil(t, result)
+        })
+    }
 }
 ```
 
-## Estructura de Proyecto
+### Race Detector
 
-```
-project/
-├── cmd/
-│   └── api/
-│       └── main.go           # Entrypoint
-├── internal/                 # Código privado del proyecto
-│   ├── config/
-│   ├── handler/              # HTTP handlers
-│   ├── service/              # Business logic
-│   ├── repository/           # Data access
-│   └── model/                # Domain models
-├── pkg/                      # Código público reutilizable
-├── go.mod
-├── go.sum
-└── Makefile
-```
-
-## Comandos de Validación
+Always run tests with race detector to catch concurrency issues:
 
 ```bash
-# Formateo y linting
-go fmt ./...
-go vet ./...
-golangci-lint run
+# Run with race detector
+go test -race ./...
 
-# Testing
-go test ./... -v
-go test ./... -race -cover
-go test -bench=. ./...
-
-# Dependencias
-go mod tidy
-go mod verify
-
-# Vulnerabilidades
-govulncheck ./...
+# Race detector catches:
+# - Concurrent map access
+# - Unsynchronized variable access
+# - Data races in goroutines
 ```
 
-## Performance
+**Performance Impact**: 2-20x slower, 5-10x more memory (testing only, not production).
+
+### Test Fixtures & Helpers
 
 ```go
-// Pre-allocar slices cuando conoces el tamaño
-results := make([]Result, 0, len(items))
-
-// strings.Builder para concatenación
-var sb strings.Builder
-for _, s := range items {
-    sb.WriteString(s)
-}
-result := sb.String()
-
-// sync.Pool para objetos frecuentes
-var bufferPool = sync.Pool{
-    New: func() interface{} {
-        return new(bytes.Buffer)
-    },
+// Use testdata/ directory for test files
+func TestLoadConfig(t *testing.T) {
+    data, err := os.ReadFile("testdata/config.json")
+    assert.NoError(t, err)
+    // ...
 }
 
-// Evitar allocations en hot paths
-func (s *Service) Process(data []byte) error {
-    buf := bufferPool.Get().(*bytes.Buffer)
-    defer bufferPool.Put(buf)
-    buf.Reset()
-    // use buf...
+// Test helpers
+func newTestServer(t *testing.T) *Server {
+    t.Helper()
+    server := &Server{}
+    t.Cleanup(func() {
+        server.Close()
+    })
+    return server
 }
 ```
 
-## Anti-Patrones
+### Integration Tests
 
-| Anti-Patrón | Solución |
-|-------------|----------|
-| Ignorar errores con `_` | Siempre manejar o documentar por qué |
-| `panic` en bibliotecas | Retornar error |
-| Interfaces grandes | Dividir en interfaces pequeñas |
-| Context en structs | Pasar como primer parámetro |
-| Goroutines sin control | Usar errgroup o similar |
+```go
+// Use build tags to separate unit and integration tests
+//go:build integration
+
+package mypackage_test
+
+import (
+    "testing"
+    "github.com/testcontainers/testcontainers-go"
+)
+
+func TestDatabaseIntegration(t *testing.T) {
+    if testing.Short() {
+        t.Skip("Skipping integration test")
+    }
+
+    // Use testcontainers for real database
+    // ...
+}
+```
+
+Run integration tests:
+```bash
+go test -tags=integration ./...
+```

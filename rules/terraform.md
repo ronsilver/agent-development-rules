@@ -5,229 +5,360 @@ globs: ["*.tf", "*.tfvars", "*.tftest.hcl"]
 
 # Terraform Best Practices
 
-## Validación Obligatoria
+## Mandatory Verification - Layered Security Approach
 
-Después de cada cambio ejecutar:
+Before any commit or PR, you **MUST** run this **3-layer validation**:
+
+### Layer 1: Code Quality (Pre-commit)
 ```bash
-terraform fmt -recursive -check  # Verificar formato
-terraform validate               # Validar sintaxis
-terraform test                   # Si hay tests configurados
+terraform fmt -recursive -check     # Format check
+terraform validate                   # Syntax validation
+tflint --recursive                   # Best practices linting
 ```
 
-## Estructura de Módulo
-
-```
-modules/nombre/
-├── main.tf           # Recursos principales
-├── variables.tf      # Variables de entrada
-├── outputs.tf        # Valores de salida
-├── versions.tf       # Provider requirements
-├── locals.tf         # Variables locales computadas
-├── data.tf           # Data sources (opcional)
-└── README.md         # Documentación (terraform-docs)
+### Layer 2: Security Scanning (CI/CD)
+```bash
+checkov -d .                        # Security & compliance
+tfsec .                             # Security misconfigurations
+trivy config .                      # Vulnerability scanning
 ```
 
-## Variables - Requisitos
+### Layer 3: Documentation (CI/CD)
+```bash
+terraform-docs markdown table . > README.md
+```
 
-### Obligatorio
-- `type` - Tipo de dato explícito
-- `description` - Descripción clara del propósito
+**Stop immediately if any layer fails.**
 
-### Cuando Aplique
-- `validation` - Validar valores permitidos
-- `default` - Solo si tiene sentido un valor por defecto
-- `sensitive = true` - Para secrets, passwords, tokens
-- `nullable = false` - Cuando null no es válido
+## Module Structure
+
+```
+modules/name/
+├── main.tf
+├── variables.tf
+├── outputs.tf
+├── versions.tf
+└── README.md
+```
+
+## Variables
+
+### Requirements
+- **`type`**: MUST be explicit.
+- **`description`**: MUST be present.
 
 ```hcl
 variable "environment" {
   type        = string
-  description = "Deployment environment (dev, staging, prod)"
-  nullable    = false
-
+  description = "Deployment environment"
   validation {
-    condition     = contains(["dev", "staging", "prod"], var.environment)
-    error_message = "Environment must be: dev, staging, or prod."
+    condition     = contains(["dev", "prod"], var.environment)
+    error_message = "Invalid environment."
   }
-}
-
-variable "instance_count" {
-  type        = number
-  description = "Number of instances to create"
-  default     = 1
-
-  validation {
-    condition     = var.instance_count >= 1 && var.instance_count <= 10
-    error_message = "Instance count must be between 1 and 10."
-  }
-}
-
-variable "database_password" {
-  type        = string
-  description = "Database master password"
-  sensitive   = true
-}
-```
-
-## Outputs
-
-```hcl
-output "instance_id" {
-  description = "EC2 instance ID for the web server"
-  value       = aws_instance.web.id
-}
-
-output "database_endpoint" {
-  description = "RDS endpoint for database connections"
-  value       = aws_db_instance.main.endpoint
-  sensitive   = true  # Si contiene info sensible
-}
-
-# Output condicional
-output "load_balancer_dns" {
-  description = "ALB DNS name (only if ALB is created)"
-  value       = var.create_alb ? aws_lb.main[0].dns_name : null
 }
 ```
 
 ## Naming Convention
-
-```hcl
-# Patrón: {resource_type}_{purpose}
-resource "aws_iam_role" "ecs_task_execution" { }
-resource "aws_security_group" "alb_ingress" { }
-resource "aws_s3_bucket" "application_logs" { }
-
-# Para múltiples recursos similares
-resource "aws_subnet" "private" {
-  for_each = var.private_subnets
-  # ...
-}
-```
-
-## Provider Versions
-
-```hcl
-terraform {
-  required_version = ">= 1.6.0"
-
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = ">= 5.0, < 6.0"  # Permitir minor updates
-    }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.6"  # Permitir patch updates
-    }
-  }
-}
-```
-
-## Tags Obligatorios
-
-```hcl
-locals {
-  common_tags = {
-    Environment = var.environment
-    Project     = var.project
-    ManagedBy   = "terraform"
-    Repository  = var.repository_url
-  }
-}
-
-# En el provider para aplicar a todos los recursos
-provider "aws" {
-  region = var.aws_region
-
-  default_tags {
-    tags = local.common_tags
-  }
-}
-```
+- `snake_case` for everything (resources, variables, outputs).
+- Resource names should be descriptive: `aws_s3_bucket.app_logs`.
 
 ## State Management
+- **Remote State**: Always use remote backend (S3+DynamoDB, Terraform Cloud).
+- **Locking**: Ensure state locking is enabled.
+
+## Best Practices
+- **For Each** > **Count**: Use `for_each` for lists/sets of resources.
+- **Tags**: Enforce strict tagging (Env, Project, Owner).
+- **Secrets**: NEVER in `.tfvars`. Use AWS Secrets Manager.
+
+## TFLint Configuration - Code Quality Layer
+
+TFLint analyzes Terraform code for errors, best practices, and provider-specific issues **before** security scanning.
+
+### Installation
+```bash
+# macOS
+brew install tflint
+
+# Linux
+curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+
+# Docker
+docker run --rm -v $(pwd):/data -t ghcr.io/terraform-linters/tflint
+```
+
+### Configuration - `.tflint.hcl`
 
 ```hcl
-# Backend remoto con locking
-terraform {
-  backend "s3" {
-    bucket         = "my-terraform-state"
-    key            = "project/terraform.tfstate"
-    region         = "us-east-1"
-    encrypt        = true
-    dynamodb_table = "terraform-locks"
-  }
+# .tflint.hcl
+config {
+  module = true
+  force = false
+}
+
+# AWS Plugin (for AWS resources)
+plugin "aws" {
+  enabled = true
+  version = "0.30.0"
+  source  = "github.com/terraform-linters/tflint-ruleset-aws"
+}
+
+# Azure Plugin
+plugin "azurerm" {
+  enabled = false
+  version = "0.25.0"
+  source  = "github.com/terraform-linters/tflint-ruleset-azurerm"
+}
+
+# GCP Plugin
+plugin "google" {
+  enabled = false
+  version = "0.27.0"
+  source  = "github.com/terraform-linters/tflint-ruleset-google"
+}
+
+# Core rules
+rule "terraform_naming_convention" {
+  enabled = true
+  format  = "snake_case"
+}
+
+rule "terraform_deprecated_interpolation" {
+  enabled = true
+}
+
+rule "terraform_unused_declarations" {
+  enabled = true
+}
+
+rule "terraform_typed_variables" {
+  enabled = true
+}
+
+rule "terraform_required_version" {
+  enabled = true
 }
 ```
 
-## Patrones Comunes
+### TFLint Rules Categories
 
-### Recursos Condicionales
-```hcl
-# Usando count
-resource "aws_cloudwatch_log_group" "app" {
-  count = var.enable_logging ? 1 : 0
-  name  = "/app/${var.environment}"
-}
+**Syntax Issues**:
+- Detects invalid resource attributes
+- Finds unused variables
+- Checks for typos in resource names
 
-# Referencia condicional
-log_group_arn = var.enable_logging ? aws_cloudwatch_log_group.app[0].arn : null
+**Best Practices**:
+- Enforces snake_case naming (not dashes)
+- Validates required_version constraints
+- Checks for deprecated syntax (e.g., `"${var.foo}"` → `var.foo`)
+
+**Provider-Specific** (AWS example):
+- Invalid instance types
+- Deprecated resource attributes
+- Region-specific validation
+
+### Usage
+
+```bash
+# Initialize TFLint (downloads plugins)
+tflint --init
+
+# Run linting
+tflint
+
+# Recursive (all modules)
+tflint --recursive
+
+# Format: JSON/SARIF for CI/CD
+tflint --format json
+tflint --format sarif
+
+# With specific config file
+tflint --config .tflint.hcl
 ```
 
-### For Each (preferido sobre count)
-```hcl
-resource "aws_iam_user" "developers" {
-  for_each = toset(var.developer_names)
-  name     = each.value
-}
+## Checkov Configuration - Security & Compliance Layer
 
-# Con mapa
-resource "aws_s3_bucket" "buckets" {
-  for_each = var.buckets
-  bucket   = each.value.name
-  # ...
-}
+Checkov enforces security best practices and compliance standards (CIS, SOC 2, PCI-DSS).
+
+### Installation
+```bash
+pip install checkov
+
+# Or use Docker
+docker run --rm -v $(pwd):/tf bridgecrew/checkov -d /tf
 ```
 
-### Dynamic Blocks
-```hcl
-resource "aws_security_group" "web" {
-  name = "web-sg"
+### Configuration - `.checkov.yaml`
 
-  dynamic "ingress" {
-    for_each = var.ingress_rules
-    content {
-      description = ingress.value.description
-      from_port   = ingress.value.port
-      to_port     = ingress.value.port
-      protocol    = "tcp"
-      cidr_blocks = ingress.value.cidr_blocks
-    }
-  }
-}
+```yaml
+# .checkov.yaml
+branch: main
+download-external-modules: true
+evaluate-variables: true
+
+# Skip specific checks
+skip-check:
+  - CKV_AWS_79  # Example: S3 bucket encryption with specific KMS key
+
+# Frameworks to scan
+framework:
+  - terraform
+  - terraform_plan
+
+# Severity filters
+check:
+  - LOW
+  - MEDIUM
+  - HIGH
+  - CRITICAL
+
+# Custom policies directory
+external-checks-dir:
+  - ./custom-policies
+
+# Output formats
+output:
+  - cli
+  - json
+  - sarif
 ```
 
-### Locals para Lógica Compleja
-```hcl
-locals {
-  # Computar valores derivados
-  is_production = var.environment == "prod"
-  instance_type = local.is_production ? "t3.large" : "t3.micro"
-  
-  # Merge de configuraciones
-  final_tags = merge(local.common_tags, var.extra_tags)
-}
+### Checkov Best Practices
+
+**Baseline Creation** (for existing infrastructure):
+```bash
+# Create baseline (ignore existing issues)
+checkov -d . --create-baseline
+
+# Run with baseline
+checkov -d . --baseline checkov_baseline.json
 ```
 
-## Anti-Patrones
+**SOC 2 Compliance**:
+```bash
+checkov -d . --check CKV_AWS_*
+```
 
-| Anti-Patrón | Solución |
-|-------------|----------|
-| Variables sin `description` | Siempre documentar propósito |
-| Hardcodear valores | Usar variables con defaults |
-| `count` con listas | Usar `for_each` (más predecible) |
-| Providers sin version constraint | Especificar rango de versiones |
-| State local en equipos | Usar remote state con locking |
-| Secrets en `.tfvars` | Usar AWS Secrets Manager/SSM |
-| Módulos sin README | Documentar con terraform-docs |
+**CI/CD Integration**:
+```bash
+# Fail on CRITICAL/HIGH only
+checkov -d . --compact --quiet --skip-download
+
+# Generate report
+checkov -d . -o json > checkov-report.json
+```
+
+## tfsec Configuration - Security Misconfigurations
+
+tfsec performs static analysis for security misconfigurations.
+
+### Installation
+```bash
+# macOS
+brew install tfsec
+
+# Linux
+curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+```
+
+### Configuration - `.tfsec.yaml`
+
+```yaml
+# .tfsec.yaml
+severity_overrides:
+  CKV_AWS_79: LOW
+
+exclude:
+  - aws-s3-enable-versioning  # Specific exclusion
+
+minimum_severity: MEDIUM
+```
+
+### Usage
+
+```bash
+# Run tfsec
+tfsec .
+
+# With specific format
+tfsec . --format json
+tfsec . --format sarif
+
+# Exclude specific checks
+tfsec . --exclude aws-s3-enable-versioning
+
+# Soft fail (exit 0 even with issues)
+tfsec . --soft-fail
+```
+
+## Tool Comparison & When to Use Each
+
+| Tool | Purpose | When to Use | Example Issues |
+|------|---------|-------------|----------------|
+| **TFLint** | Code quality & best practices | Pre-commit hook | Unused variables, typos, naming conventions |
+| **Checkov** | Security & compliance | CI/CD pipeline | CIS benchmarks, SOC 2 compliance |
+| **tfsec** | Security misconfigurations | CI/CD pipeline | Open security groups, unencrypted storage |
+| **Trivy** | Vulnerability scanning | CI/CD pipeline | CVEs in modules, outdated providers |
+
+## Pre-commit Integration
+
+Create `.pre-commit-config.yaml`:
+
+```yaml
+repos:
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.88.0
+    hooks:
+      - id: terraform_fmt
+      - id: terraform_validate
+      - id: terraform_tflint
+        args:
+          - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
+      - id: terraform_docs
+        args:
+          - --hook-config=--path-to-file=README.md
+```
+
+## CI/CD Pipeline Example
+
+```yaml
+# GitHub Actions
+name: Terraform Validation
+
+on: [push, pull_request]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Layer 1: Code Quality
+      - name: TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+      - run: tflint --init
+      - run: tflint --recursive
+
+      # Layer 2: Security
+      - name: Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: terraform
+
+      - name: tfsec
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          soft_fail: false
+```
+
+## Quality Checklist
+- [ ] `tflint` passes (code quality).
+- [ ] `checkov` passes (security & compliance).
+- [ ] `tfsec` passes (security misconfigurations).
+- [ ] `terraform-docs` generated.
+- [ ] All variables have descriptions.
+- [ ] No hardcoded secrets.

@@ -1,87 +1,72 @@
 # Document
 
-Generar documentación para el código seleccionado o proyecto.
+Generate comprehensive documentation for the selected code or project.
 
-## Tipos de Documentación
+## Documentation Types
 
-### 1. Docstrings/Comentarios
+### 1. Code Comments (Docstrings)
 
-**Cuándo documentar:**
-- Lógica de negocio no obvia
-- Decisiones de diseño y sus razones
-- Workarounds con referencia a issues
-- APIs públicas
-- Algoritmos complejos
+**When to Document:**
+- Non-obvious business logic.
+- Design decisions and "Why" (not just "What").
+- Workarounds for specific issues (link to tickets).
+- Public APIs.
+- Complex algorithms.
 
-**Cuándo NO documentar:**
-- Código auto-explicativo
-- Getters/setters triviales
-- Comentarios que repiten el código
+**When NOT to Document:**
+- Self-explanatory code.
+- Trivial getters/setters.
+- Comments that merely repeat the code.
 
 ```python
-# ❌ Malo - repite el código
-# Incrementar contador
+# ❌ Bad - repeats code
+# Increment counter
 counter += 1
 
-# ✅ Bueno - explica el por qué
+# ✅ Good - explains why
 # Skip header rows per CSV spec v2.1
 counter += 2
 ```
 
-### 2. README
+### 2. README Standard
 
-Estructura recomendada:
+Recommended structure:
 
 ```markdown
-# Nombre del Proyecto
+# Project Name
 
-Descripción breve (1-2 oraciones).
+One-liner description.
 
-## Requisitos
+## Requirements
+- Dependencies
+- Supported versions
 
-- Dependencias necesarias
-- Versiones soportadas
-
-## Instalación
-
+## Installation
 ```bash
-# Comandos de instalación
+# Install commands
 ```
 
-## Uso
-
+## Usage
 ```bash
-# Ejemplo de uso básico
+# Basic usage example
 ```
 
-## Configuración
-
-| Variable | Descripción | Default |
-|----------|-------------|----------|
-| `VAR` | Descripción | `value` |
-
-## Desarrollo
-
-```bash
-# Setup para desarrollo
-```
-
-## Licencia
-
-MIT
+## Configuration
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `VAR`    | Description | `value` |
 ```
 
 ### 3. API Documentation
 
-Para cada endpoint:
+For each endpoint:
 
 ```markdown
 ## POST /api/users
 
-Crear un nuevo usuario.
+Create a new user.
 
-### Request
-
+### Request Body
 ```json
 {
   "name": "string (required)",
@@ -89,39 +74,23 @@ Crear un nuevo usuario.
 }
 ```
 
-### Response
-
-**201 Created**
-```json
-{
-  "id": "uuid",
-  "name": "string",
-  "email": "string",
-  "created_at": "ISO 8601"
-}
+### Responses
+- **201 Created**: User created successfully.
+- **400 Bad Request**: Validation error.
 ```
 
-**400 Bad Request**
-```json
-{
-  "error": "validation_error",
-  "details": [...]
-}
-```
-```
+## Language Specifics
 
-## Formato por Lenguaje
-
-| Lenguaje | Formato |
+| Language | Format |
 |----------|----------|
-| Python | Google style docstrings |
+| Python | Google Style Docstrings |
 | Go | GoDoc comments |
 | TypeScript | TSDoc/JSDoc |
 | Terraform | terraform-docs |
 
-## Instrucciones
+## Instructions
 
-1. Analizar código/proyecto
-2. Generar documentación apropiada según contexto
-3. Mantener formato consistente con existente
-4. Incluir ejemplos prácticos
+1.  Analyze the code context.
+2.  Generate appropriate documentation.
+3.  Ensure consistency with existing docs.
+4.  Include practical examples.

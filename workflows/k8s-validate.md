@@ -1,23 +1,40 @@
 ---
 name: k8s-validate
-description: Validar manifests Kubernetes
+description: Validate Kubernetes manifests
 ---
 
 # Workflow: K8s Validate
 
-## Pasos
+## Steps
 
-1. **Detectar tipo**
-   - Helm: `Chart.yaml`
-   - Kustomize: `kustomization.yaml`
-   - Plain YAML
+1.  **Detect Type**
+    - Helm: `Chart.yaml`
+    - Kustomize: `kustomization.yaml`
+    - Plain YAML: `*.yaml` (with kind/apiVersion)
 
-2. **Validar**
-   - Helm: `helm lint && helm template`
-   - Kustomize: `kubectl kustomize`
-   - YAML: `kubectl apply --dry-run=client -f`
+2.  **Validate**
 
-3. **Verificar best practices**
-   - Resources definidos
-   - Probes configurados
-   - Labels estándar
+    **Helm**:
+    ```bash
+    helm lint ./chart
+    helm template ./chart > /dev/null
+    # STOP if lint fails
+    ```
+
+    **Kustomize**:
+    ```bash
+    kubectl kustomize . > /dev/null
+    # STOP if build fails
+    ```
+
+    **Plain YAML**:
+    ```bash
+    kubeval *.yaml
+    # OR
+    kubectl apply --dry-run=client -f .
+    ```
+
+3.  **Best Practices Check**
+    - [ ] Resources (requests/limits) defined?
+    - [ ] Probes (liveness/readiness) configured?
+    - [ ] SecurityContext (runAsNonRoot) set?

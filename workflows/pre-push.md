@@ -1,70 +1,50 @@
 ---
 name: pre-push
-description: Verificaciones completas antes de push
+description: Comprehensive pre-push checks
 ---
 
 # Workflow: Pre-Push
 
-Checklist completo antes de hacer push al repositorio remoto.
+Run this checklist BEFORE pushing to remote.
 
-## Pasos
+## Steps
 
-### 1. Verificar Estado del Repositorio
+### 1. Check Repository Status
 ```bash
 git status
-git diff --stat  # Ver resumen de cambios
+git diff --stat
 ```
+**Verify:**
+- No untracked files that should be committed.
+- NO SENSITIVE FILES (`.env`, secrets).
 
-**Verificar:**
-- No hay archivos sin trackear que deberían incluirse
-- No hay archivos sensibles (`.env`, `*.tfvars`, secrets)
+### 2. Validate Code (Run ALL Checks)
 
-### 2. Validar Código
-
-| Proyecto | Comandos |
-|----------|----------|
+| Project | Commands |
+|---------|----------|
 | Terraform | `terraform fmt -check && terraform validate` |
-| Go | `go fmt ./... && go vet ./... && go test ./...` |
+| Go | `go fmt ./... && golangci-lint run && go test ./...` |
 | Python | `black --check . && ruff check . && pytest` |
 | Node/TS | `npm run lint && npm test` |
 
-### 3. Sincronizar con Remoto
+**STOP**: If any command fails, fix it. DO NOT PUSH.
+
+### 3. Sync with Remote
 ```bash
 git fetch origin
-git log --oneline HEAD..origin/main  # Ver commits nuevos en main
+git rebase origin/main
 ```
 
-**Si hay cambios:**
-```bash
-git pull --rebase origin main
-```
-
-### 4. Resolver Conflictos (si hay)
-```bash
-# Después de resolver cada archivo:
-git add <archivo>
-git rebase --continue
-```
-
-### 5. Revisar Commits a Enviar
+### 4. Review Commits to Push
 ```bash
 git log --oneline origin/main..HEAD
 ```
+**Verify:**
+- Messages follow Conventional Commits (`feat(scope): ...`).
+- No "WIP" or "fix" generic messages.
+- Commits are atomic.
 
-**Verificar:**
-- Mensajes de commit siguen convención
-- No hay commits de debug o WIP
-- Cambios son coherentes y atómicos
-
-### 6. Push
+### 5. Push
 ```bash
 git push origin <branch>
 ```
-
-## Checklist Final
-
-- [ ] Tests pasan
-- [ ] Lint/format aplicado
-- [ ] No hay archivos sensibles
-- [ ] Sincronizado con main
-- [ ] Commits tienen mensajes descriptivos

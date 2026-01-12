@@ -5,233 +5,373 @@ globs: ["*.js", "*.ts", "*.tsx", "package.json"]
 
 # Node.js / TypeScript Best Practices
 
-## Configuración TypeScript Estricta
+## Strict Mode - NON-NEGOTIABLE
 
-```json
-// tsconfig.json
-{
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "outDir": "dist",
-    "rootDir": "src"
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
-}
+`tsconfig.json` **MUST** have `"strict": true`. No exceptions.
+
+## Mandatory Tooling
+
+Before any commit or PR, you **MUST** run:
+```bash
+npm run format     # Prettier formatting
+npm run typecheck  # TypeScript check
+npm run lint       # ESLint
+npm test           # Tests with coverage
 ```
 
-## Types vs Interfaces
+## Type Safety
+- **Interface**: Use for objects and extension.
+- **Type**: Use for unions, intersections, utilities.
+- **Avoid `any`**: Use `unknown` with type guards or Generics.
 
 ```typescript
-// ✅ Interface para objetos y extensión
-interface User {
-  id: string;
-  name: string;
-  email: string;
-}
-
-interface AdminUser extends User {
-  permissions: string[];
-}
-
-// ✅ Type para unions, intersections, utilities
-type Status = 'pending' | 'active' | 'inactive';
-type CreateUserInput = Omit<User, 'id'>;
-type UserOrAdmin = User | AdminUser;
-```
-
-## Evitar `any`
-
-```typescript
-// ❌ Incorrecto
+// ❌ Bad
 function process(data: any) { }
 
-// ✅ Usar unknown y validar
+// ✅ Good
 function process(data: unknown) {
-  if (isValidData(data)) {
-    // data ahora tiene tipo específico
-  }
-}
-
-// ✅ Usar generics
-function process<T extends BaseData>(data: T): ProcessedData<T> {
-  // ...
+  if (isData(data)) { ... }
 }
 ```
 
-## Async/Await
+## Async Patterns
+- **Callback Hell**: Strictly FORBIDDEN.
+- **Mix Async/Sync**: Avoid.
+- Use `Promise.all` for parallel operations.
+- **Top-level Await**: Allowed in ESM.
 
-```typescript
-// ✅ Correcto - async/await con manejo de errores
-async function fetchUser(id: string): Promise<User> {
-  try {
-    const response = await fetch(`/api/users/${id}`);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    return await response.json() as User;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(`Failed to fetch user: ${error.message}`);
-    }
-    throw error;
-  }
-}
+## Runtime Validation (Zod)
 
-// ✅ Operaciones paralelas
-const [user, orders] = await Promise.all([
-  fetchUser(userId),
-  fetchOrders(userId),
-]);
-
-// ✅ Promise.allSettled para tolerancia a fallos
-const results = await Promise.allSettled(tasks);
-const successful = results
-  .filter((r): r is PromiseFulfilledResult<T> => r.status === 'fulfilled')
-  .map(r => r.value);
-```
-
-## Imports (ESM)
-
-```typescript
-// 1. Externos (node_modules)
-import { z } from 'zod';
-import express from 'express';
-
-// 2. Node.js built-ins
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
-
-// 3. Internos (aliases)
-import { UserService } from '@/services/user.js';
-import { validateEmail } from '@/utils/validation.js';
-
-// 4. Relativos
-import { config } from './config.js';
-import type { AppContext } from './types.js';
-```
-
-## Null Safety
-
-```typescript
-// Optional chaining
-const userName = user?.profile?.name;
-const firstItem = items?.[0];
-const result = callback?.();
-
-// Nullish coalescing
-const port = config.port ?? 3000;
-const name = user.name ?? 'Anonymous';
-
-// Type guards
-function isUser(value: unknown): value is User {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'id' in value &&
-    'name' in value
-  );
-}
-```
-
-## Validación con Zod
+TypeScript checks types at compile time. You **MUST** use `zod` to validate external data (API request, Env vars, DB result) at runtime.
 
 ```typescript
 import { z } from 'zod';
 
 const UserSchema = z.object({
   id: z.string().uuid(),
-  name: z.string().min(1).max(100),
   email: z.string().email(),
-  age: z.number().int().min(0).max(150).optional(),
 });
 
-type User = z.infer<typeof UserSchema>;
+// Parse validates runtime data matches the schema
+const user = UserSchema.parse(input);
+```
 
-function createUser(input: unknown): User {
-  return UserSchema.parse(input);
+## Project Structure
+Standard `src/` layout:
+```
+src/
+  index.ts
+  services/
+  routes/
+  utils/
+  types/
+```
+
+## ESLint Configuration - Flat Config (2025 Standard)
+
+### Migration to Flat Config
+
+ESLint v9+ uses **flat config** (`eslint.config.js`) instead of `.eslintrc.*`. This is the **new standard for 2025**.
+
+**Legacy** (deprecated):
+```json
+// .eslintrc.json
+{
+  "extends": ["eslint:recommended"],
+  "rules": {}
 }
-
-// Safe parse sin throw
-const result = UserSchema.safeParse(input);
-if (result.success) {
-  const user = result.data;
-} else {
-  console.error(result.error.issues);
-}
 ```
 
-## Estructura de Proyecto
+**Modern** (flat config):
+```javascript
+// eslint.config.js
+import js from '@eslint/js';
+import tseslint from '@typescript-eslint/eslint-plugin';
+import tsParser from '@typescript-eslint/parser';
 
-```
-project/
-├── src/
-│   ├── index.ts          # Entry point
-│   ├── config.ts         # Configuración
-│   ├── types/            # Type definitions
-│   ├── services/         # Business logic
-│   ├── routes/           # HTTP routes
-│   └── utils/            # Helpers
-├── tests/
-│   └── *.test.ts
-├── package.json
-├── tsconfig.json
-└── .env.example
+export default [
+  js.configs.recommended,
+  {
+    files: ['**/*.ts', '**/*.tsx'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        project: './tsconfig.json',
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
+    },
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unused-vars': 'error',
+      '@typescript-eslint/explicit-function-return-type': 'warn',
+    },
+  },
+];
 ```
 
-## package.json
+### TypeScript ESLint Configurations
+
+Choose based on team proficiency:
+
+| Config | Use Case | Performance Impact |
+|--------|----------|-------------------|
+| **recommended** | Most projects | Normal |
+| **strict** | High code quality standards | Normal |
+| **strict-type-checked** | Expert TypeScript teams | 30x slower (requires type info) |
+
+**Recommended Setup**:
+```javascript
+// eslint.config.js
+import tseslint from 'typescript-eslint';
+
+export default tseslint.config(
+  // Core recommended rules
+  ...tseslint.configs.recommended,
+
+  // Strict rules (no type checking)
+  ...tseslint.configs.strict,
+
+  // Custom overrides
+  {
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unused-vars': ['error', {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+      }],
+    },
+  }
+);
+```
+
+**Advanced Setup (Type-Checked)** - Use only if team is highly proficient:
+```javascript
+import tseslint from 'typescript-eslint';
+
+export default tseslint.config(
+  ...tseslint.configs.strictTypeChecked,
+  {
+    languageOptions: {
+      parserOptions: {
+        project: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  }
+);
+```
+
+**Warning**: Type-checked configs can increase ESLint execution time by 30x. Use only on small/medium codebases or expert teams.
+
+### Essential ESLint Rules
+
+```javascript
+export default [
+  {
+    rules: {
+      // TypeScript
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unused-vars': 'error',
+      '@typescript-eslint/explicit-function-return-type': 'warn',
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/await-thenable': 'error',
+
+      // Code quality
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-debugger': 'error',
+      'prefer-const': 'error',
+      'no-var': 'error',
+
+      // Modern syntax
+      'prefer-arrow-callback': 'error',
+      'prefer-template': 'error',
+      'object-shorthand': 'error',
+    },
+  },
+];
+```
+
+## TypeScript Strict Mode Comparison
+
+### `tsconfig.json` - Strict Configuration
 
 ```json
 {
-  "name": "my-app",
-  "type": "module",
-  "engines": {
-    "node": ">=20.0.0"
+  "compilerOptions": {
+    "strict": true,  // Enables all strict options below
+
+    // Strict checks (enabled by "strict": true)
+    "noImplicitAny": true,           // No implicit 'any' types
+    "strictNullChecks": true,         // Null/undefined checking
+    "strictFunctionTypes": true,      // Function type checking
+    "strictBindCallApply": true,      // bind/call/apply checking
+    "strictPropertyInitialization": true,  // Class property initialization
+    "noImplicitThis": true,           // No implicit 'this'
+    "alwaysStrict": true,             // Use 'use strict' mode
+
+    // Additional strict options (not in "strict")
+    "noUnusedLocals": true,           // Report unused local variables
+    "noUnusedParameters": true,       // Report unused parameters
+    "noImplicitReturns": true,        // All code paths return value
+    "noFallthroughCasesInSwitch": true,  // No fallthrough in switch
+    "noUncheckedIndexedAccess": true, // Index signatures return T | undefined
+    "noImplicitOverride": true,       // Explicit 'override' keyword
+    "allowUnusedLabels": false,       // Report unused labels
+    "allowUnreachableCode": false,    // Report unreachable code
+
+    // Module resolution
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "target": "ES2022",
+    "lib": ["ES2022"],
+
+    // Interop
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+
+    // Output
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "dist"
   },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
+```
+
+## Testing with Vitest
+
+Vitest is the **modern alternative** to Jest (faster, native ESM, better TypeScript support).
+
+### Installation
+```bash
+npm install -D vitest @vitest/ui
+```
+
+### Configuration - `vitest.config.ts`
+```typescript
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: 'node',  // or 'jsdom' for browser
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      exclude: [
+        'node_modules/',
+        'dist/',
+        '**/*.test.ts',
+        '**/*.config.*',
+      ],
+      thresholds: {
+        lines: 80,
+        functions: 80,
+        branches: 80,
+        statements: 80,
+      },
+    },
+  },
+});
+```
+
+### Test Examples
+
+**Basic Test**:
+```typescript
+import { describe, it, expect } from 'vitest';
+
+describe('Calculator', () => {
+  it('should add two numbers', () => {
+    expect(1 + 1).toBe(2);
+  });
+
+  it('should handle negative numbers', () => {
+    expect(-1 + -1).toBe(-2);
+  });
+});
+```
+
+**Async Tests**:
+```typescript
+import { describe, it, expect } from 'vitest';
+
+describe('API', () => {
+  it('should fetch user data', async () => {
+    const user = await fetchUser(123);
+    expect(user.id).toBe(123);
+    expect(user.name).toBeDefined();
+  });
+});
+```
+
+**Mocking**:
+```typescript
+import { describe, it, expect, vi } from 'vitest';
+
+describe('Service', () => {
+  it('should call repository', async () => {
+    const mockRepo = {
+      getUser: vi.fn().mockResolvedValue({ id: 123 }),
+    };
+
+    const service = new Service(mockRepo);
+    const user = await service.getUser(123);
+
+    expect(mockRepo.getUser).toHaveBeenCalledWith(123);
+    expect(user.id).toBe(123);
+  });
+});
+```
+
+**Snapshot Testing**:
+```typescript
+import { describe, it, expect } from 'vitest';
+
+describe('Component', () => {
+  it('should render correctly', () => {
+    const output = render({ name: 'John' });
+    expect(output).toMatchSnapshot();
+  });
+});
+```
+
+### Package.json Scripts
+```json
+{
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "tsx watch src/index.ts",
-    "test": "vitest",
-    "test:coverage": "vitest --coverage",
-    "lint": "eslint src/",
-    "typecheck": "tsc --noEmit"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui"
   }
 }
 ```
 
-## Comandos de Validación
+## Coverage Requirements
+
+- **Critical Logic**: 90% coverage
+- **Public API**: 80% coverage
+- **Overall**: 70% coverage minimum
 
 ```bash
-# Type checking
-npm run typecheck
-
-# Linting
-npm run lint
-
-# Testing
-npm test
+# Run with coverage
 npm run test:coverage
 
-# Seguridad
-npm audit
-npm audit fix
+# CI/CD: Fail if coverage drops
+vitest run --coverage --coverage.thresholds.lines=70
 ```
 
-## Anti-Patrones
-
-| Anti-Patrón | Solución |
-|-------------|----------|
-| Usar `any` | `unknown` + type guards o generics |
-| Callbacks anidados | async/await |
-| `require()` | ESM imports |
-| `.then().catch()` chains | async/await con try/catch |
-| Ignorar errores async | Siempre manejar rechazos |
+## Tooling Summary
+- **Format**: `prettier`
+- **Lint**: `eslint` (flat config)
+- **Type Check**: `tsc --noEmit`
+- **Test**: `vitest` (recommended) or `jest`
+- **Build**: `tsc` or `tsup`
+- **Bundle**: `vite`, `esbuild`, or `rollup`

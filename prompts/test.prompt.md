@@ -1,51 +1,45 @@
 # Test
 
-Generar tests completos para el código seleccionado.
+Generate comprehensive tests for the selected code.
 
-## Cobertura Requerida
+## Coverage Requirements
 
 ### 1. Happy Path
-- Flujo normal con inputs válidos
-- Casos de uso principales
-- Verificar outputs esperados
+- Normal flow with valid inputs.
+- Main use cases.
+- Verify expected outputs.
 
 ### 2. Edge Cases
-- Valores límite (0, -1, MAX_INT)
-- Strings vacíos, arrays vacíos
-- Valores nulos/undefined
-- Unicode y caracteres especiales
-- Concurrencia (si aplica)
+- Boundary values (0, -1, MAX_INT).
+- Empty strings/arrays.
+- Null/Undefined.
+- Special characters.
 
 ### 3. Error Cases
-- Inputs inválidos (tipos incorrectos)
-- Errores de validación
-- Excepciones esperadas
-- Timeouts y errores de red (si aplica)
+- Invalid inputs (wrong types).
+- Validation errors.
+- Expected exceptions.
+- Timeouts/Network errors.
 
-## Frameworks por Lenguaje
+## Frameworks
 
-| Lenguaje | Framework | Comando |
-|----------|-----------|----------|
+| Language | Framework | Command |
+|----------|-----------|---------|
 | Go | testing + testify | `go test ./... -v` |
 | Python | pytest | `pytest -v` |
 | TypeScript | vitest/jest | `npm test` |
 | Terraform | terraform test | `terraform test` |
 
-## Estructura de Test
+## Test Structure
 
 ### Naming Convention
-```
-test_<función>_<escenario>_<resultado_esperado>
+`test_<function>_<scenario>_<expected_result>`
 
-Ejemplos:
-test_create_user_valid_input_returns_user
-test_create_user_empty_name_raises_validation_error
-test_calculate_discount_zero_amount_returns_zero
-```
+Example: `test_create_user_empty_email_raises_error`
 
-### Patrón AAA (Arrange-Act-Assert)
+### AAA Pattern (Arrange-Act-Assert)
 ```python
-def test_calculate_discount_premium_user():
+def test_calculate_discount():
     # Arrange
     user = User(tier="premium")
     amount = 100.0
@@ -54,13 +48,12 @@ def test_calculate_discount_premium_user():
     result = calculate_discount(user, amount)
 
     # Assert
-    assert result == 90.0  # 10% descuento
+    assert result == 90.0
 ```
 
-## Instrucciones
-
-1. Detectar framework de testing del proyecto
-2. Generar tests siguiendo patrones existentes
-3. Incluir setup/teardown si es necesario
-4. Usar mocks solo cuando sea imprescindible
-5. Cada test debe ser independiente y reproducible
+## Instructions
+1.  Detect existing testing framework.
+2.  Generate tests following existing patterns.
+3.  Include Setup/Teardown if needed.
+4.  Use Mocks ONLY when necessary (Unit tests).
+5.  Ensure independence (no shared state).

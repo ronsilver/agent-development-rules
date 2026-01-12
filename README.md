@@ -1,23 +1,23 @@
 # Agent Rules
 
-Reglas centralizadas de desarrollo para agentes de AI (Windsurf, GitHub Copilot, Cursor, etc.).
+Centralized development rules for AI agents (Windsurf, GitHub Copilot, Cursor, etc.).
 
-## Estructura
+## Structure
 
 ```
 agent-rules/
-├── manifest.yaml          # Configuración central
+├── manifest.yaml          # Central configuration
 │
-├── rules/                 # Reglas de desarrollo (centralizadas)
-│   ├── global.md          # Comportamiento del agente
+├── rules/                 # Development rules (centralized)
+│   ├── global.md          # Agent behavior
 │   ├── git.md             # Git/GitHub + Conventional Commits
 │   ├── security.md        # OWASP Top 10:2025
 │   ├── testing.md         # Testing Best Practices
 │   ├── performance.md     # Performance
-│   ├── scalability.md     # Escalabilidad
-│   ├── solid.md           # Principios SOLID
-│   ├── operational-excellence.md  # SRE/Observabilidad
-│   ├── documentation.md   # Documentación
+│   ├── scalability.md     # Scalability
+│   ├── solid.md           # SOLID Principles
+│   ├── operational-excellence.md  # SRE/Observability
+│   ├── documentation.md   # Documentation
 │   ├── terraform.md       # Terraform
 │   ├── aws.md             # AWS
 │   ├── go.md              # Go
@@ -35,52 +35,52 @@ agent-rules/
 │   ├── pr-review.md       # /pr-review
 │   └── ...
 │
-├── prompts/               # Prompts reutilizables
+├── prompts/               # Reusable Prompts
 │   ├── review.prompt.md
 │   ├── security.prompt.md
 │   ├── test.prompt.md
 │   └── ...
 │
 └── scripts/
-    └── sync.sh            # Script de sincronización
+    └── sync.sh            # Synchronization script
 ```
 
-## Uso
+## Usage
 
-### Sincronizar Reglas
+### Sync Rules
 
 ```bash
-# Sincronizar a todos los agentes habilitados
+# Sync to all enabled agents
 ./scripts/sync.sh
 
-# Sincronizar solo un agente
+# Sync only one agent
 ./scripts/sync.sh --agent windsurf
 ./scripts/sync.sh --agent github-copilot
 
-# Ver qué haría sin ejecutar
+# Dry run (see what would happen)
 ./scripts/sync.sh --dry-run
 
-# Listar agentes disponibles
+# List available agents
 ./scripts/sync.sh --list
 ```
 
-### Requisitos
+### Requirements
 
 ```bash
-# Instalar yq (parser de YAML)
+# Install yq (YAML parser)
 brew install yq
 ```
 
-## Configuración
+## Configuration
 
 ### manifest.yaml
 
-El archivo `manifest.yaml` define:
-- **Archivos fuente**: Lista de reglas, workflows y prompts
-- **Agentes**: Configuración de destinos por agente
+The `manifest.yaml` file defines:
+- **Source Files**: List of rules, workflows, and prompts.
+- **Agents**: Destination configuration per agent.
 
 ```yaml
-# Ejemplo de configuración de agente
+# Agent configuration example
 agents:
   windsurf:
     enabled: true
@@ -90,29 +90,29 @@ agents:
         format: merged
 ```
 
-### Agregar Nuevo Agente
+### Adding a New Agent
 
-1. Agregar sección en `manifest.yaml` bajo `agents:`
-2. Configurar `targets` con paths de destino
-3. Ejecutar `./scripts/sync.sh --agent <nombre>`
+1. Add a section in `manifest.yaml` under `agents:`.
+2. Configure `targets` with destination paths.
+3. Run `./scripts/sync.sh --agent <name>`.
 
-### Agregar Nueva Regla
+### Adding a New Rule
 
-1. Crear archivo en `rules/<nombre>.md`
-2. Agregar a lista en `manifest.yaml` bajo `rules.files`
-3. Ejecutar `./scripts/sync.sh`
+1. Create a file in `rules/<name>.md`.
+2. Add it to the list in `manifest.yaml` under `rules.files`.
+3. Run `./scripts/sync.sh`.
 
-## Contenido de Reglas
+## Rule Content
 
-### Excelencia Operativa
+### Operational Excellence
 - **security.md** - OWASP Top 10:2025
-- **testing.md** - Pirámide de tests, cobertura, naming
+- **testing.md** - Test Pyramid, coverage, naming
 - **performance.md** - Big O, caching, queries
 - **scalability.md** - Stateless, rate limiting, circuit breakers
-- **operational-excellence.md** - Logs, métricas, alertas, SRE
-- **solid.md** - Principios SOLID
+- **operational-excellence.md** - Logs, metrics, alerts, SRE
+- **solid.md** - SOLID Principles
 
-### Tecnologías
+### Technologies
 - **terraform.md** - IaC best practices
 - **aws.md** - AWS security, IAM, S3
 - **go.md** - Go idioms
@@ -122,23 +122,68 @@ agents:
 - **docker.md** - Dockerfile best practices
 - **kubernetes.md** - K8s/Helm patterns
 
-### Proceso
-- **git.md** - Conventional Commits (estricto)
+### Process
+- **git.md** - Conventional Commits (strict)
 - **documentation.md** - ADRs, READMEs
-- **global.md** - Comportamiento del agente
+- **global.md** - Agent behavior
 
-## Agentes Soportados
+## Quality Gates
 
-| Agente | Estado | Descripción |
-|--------|--------|-------------|
-| **windsurf** | ✅ Habilitado | Windsurf IDE / Codeium Cascade |
-| **github-copilot** | ✅ Habilitado | VS Code / IntelliJ |
-| **cursor** | ⬜ Deshabilitado | Cursor IDE |
-| **local-project** | ⬜ Deshabilitado | Copiar a proyecto local |
+### Linting & Formatting
 
-## Desarrollo
+All code **MUST** pass linting before commit/PR:
 
-### Estructura de una Regla
+| Language | Tools | Configuration |
+|----------|-------|---------------|
+| **Go** | `golangci-lint v2`, `go fmt`, `go vet` | `.golangci.yml` |
+| **Python** | `ruff` (format + lint), `mypy`, `bandit` | `pyproject.toml` |
+| **TypeScript** | `prettier`, `eslint` (flat config), `tsc` | `eslint.config.js`, `tsconfig.json` |
+| **Terraform** | `terraform fmt`, `tflint`, `checkov`, `tfsec` | `.tflint.hcl` |
+| **Bash** | `shfmt`, `shellcheck` | `.shellcheckrc` |
+| **Docker** | `hadolint`, `docker scout` | `.hadolint.yaml` |
+| **Kubernetes** | `kubeval`, `helm lint`, `datree` | - |
+
+See `rules/linting.md` for detailed configuration.
+
+### Testing & Coverage
+
+Minimum coverage requirements:
+
+| Code Type | Coverage Target |
+|-----------|----------------|
+| **Critical Logic** | 90% |
+| **Public API** | 80% |
+| **Overall** | 70% |
+
+**Commands**:
+- Go: `go test -race -cover ./...`
+- Python: `pytest --cov=src --cov-fail-under=70`
+- Node/TS: `vitest run --coverage`
+
+See `workflows/test.md` for detailed testing guidelines.
+
+### Pre-commit Hooks
+
+Use `.pre-commit-config.yaml.example` to catch issues before commit:
+
+```bash
+pip install pre-commit
+cp .pre-commit-config.yaml.example .pre-commit-config.yaml
+pre-commit install
+```
+
+## Supported Agents
+
+| Agent | Status | Description |
+|-------|--------|-------------|
+| **windsurf** | ✅ Enabled | Windsurf IDE / Codeium Cascade |
+| **github-copilot** | ✅ Enabled | VS Code / IntelliJ |
+| **cursor** | ⬜ Disabled | Cursor IDE |
+| **local-project** | ⬜ Disabled | Copy rules to local project |
+
+## Development
+
+### Rule Structure
 
 ```markdown
 ---
@@ -146,32 +191,32 @@ trigger: glob
 globs: ["*.py", "*.go"]
 ---
 
-# Título de la Regla
+# Rule Title
 
-## Sección 1
+## Section 1
 
-Contenido...
+Content...
 
-## Sección 2
+## Section 2
 
-Contenido...
+Content...
 ```
 
-### Estructura de un Workflow
+### Workflow Structure
 
 ```markdown
 ---
-description: Descripción del workflow
+description: Workflow description
 ---
 
-# /nombre-workflow
+# /workflow-name
 
-## Pasos
+## Steps
 
-1. Paso 1
-2. Paso 2
+1. Step 1
+2. Step 2
 ```
 
-## Licencia
+## License
 
 MIT

@@ -1,55 +1,43 @@
 # Refactor
 
-Refactorizar el código seleccionado manteniendo el comportamiento existente.
+Refactor the selected code while maintaining existing behavior.
 
-## Objetivos de Refactoring
+## Refactoring Goals
 
-### 1. Reducir Complejidad
-- Extraer funciones de métodos largos (>50 líneas)
-- Simplificar condicionales anidados (>3 niveles)
-- Usar early returns para reducir indentación
-- Eliminar código muerto
+### 1. Reduce Complexity
+- Extract functions from long methods (>50 lines).
+- Simplify nested conditionals (>3 levels).
+- Use early returns to reduce indentation.
+- Remove dead code.
 
-### 2. Mejorar Legibilidad
-- Nombres descriptivos para variables y funciones
-- Constantes con nombres en lugar de magic numbers
-- Extraer expresiones complejas a variables con nombre
-- Ordenar métodos por nivel de abstracción
+### 2. Improve Readability
+- Descriptive naming for variables and functions.
+- Replace magic numbers with named constants.
+- Extract complex expressions into named variables.
+- Order methods by abstraction level.
 
-### 3. Eliminar Duplicación
-- Identificar patrones repetidos
-- Extraer a funciones/métodos compartidos
-- Usar composición sobre herencia cuando aplique
+### 3. Eliminate Duplication (DRY)
+- Identify repeated patterns.
+- Extract to shared functions/methods.
+- Prefer composition over inheritance.
 
-### 4. Principios SOLID
-- **S**ingle Responsibility: Una razón para cambiar
-- **O**pen/Closed: Abierto a extensión, cerrado a modificación
-- **L**iskov Substitution: Subtipos intercambiables
-- **I**nterface Segregation: Interfaces pequeñas y específicas
-- **D**ependency Inversion: Depender de abstracciones
+### 4. SOLID Principles
+- **S**ingle Responsibility: One reason to change.
+- **O**pen/Closed: Open for extension, closed for modification.
+- **L**iskov Substitution: Subtypes must be substitutable.
+- **I**nterface Segregation: Specific interfaces.
+- **D**ependency Inversion: Depend on abstractions.
 
-## Restricciones
+## Constraints
 
-- ✅ Mantener comportamiento existente (mismos inputs → mismos outputs)
-- ✅ Tests existentes deben seguir pasando
-- ✅ Mantener API pública sin cambios
-- ❌ No agregar nuevas dependencias sin justificación
-- ❌ No cambiar firmas de funciones públicas
+- ✅ **Maintain Behavior**: Same inputs → Same outputs.
+- ✅ **Pass Tests**: All existing tests must pass.
+- ✅ **Public API**: Do not break public interfaces.
+- ❌ **No New Deps**: Do not add dependencies without justification.
 
-## Proceso
+## Process
 
-1. Identificar code smells
-2. Proponer cambios específicos
-3. Aplicar cambios incrementales
-4. Verificar que tests pasan después de cada cambio
-
-## Code Smells Comunes
-
-| Smell | Solución |
-|-------|----------|
-| Función larga | Extract Method |
-| Clase grande | Extract Class |
-| Parámetros excesivos | Parameter Object |
-| Código duplicado | Extract Method/Class |
-| Switch repetido | Polymorphism |
-| Feature envy | Move Method |
+1.  Identify Code Smells (God Class, Long Method, Feature Envy).
+2.  Propose specific changes.
+3.  Apply incremental refactors.
+4.  Verify tests after EACH change.

@@ -1,97 +1,72 @@
 # Security Check
 
-Analizar el código para identificar vulnerabilidades de seguridad.
+Analyze code for security vulnerabilities.
 
-## Categorías de Análisis
+## Analysis Categories
 
-### 1. Secrets y Credenciales
+### 1. Secrets & Credentials
+**Search for:**
+- Hardcoded API Keys/Tokens.
+- Passwords in code.
+- Connection strings with credentials.
+- Private keys / Certificates.
 
-**Buscar:**
-- API keys hardcodeadas
-- Passwords en código
-- Tokens de acceso
-- Connection strings con credenciales
-- Certificados o claves privadas
-
-**Patrones sospechosos:**
-```
+**Regex Patterns:**
+```regex
 password\s*=\s*["'][^"']+["']
 api[_-]?key\s*=\s*["'][^"']+["']
-secret\s*=\s*["'][^"']+["']
 Authorization:\s*Bearer\s+[A-Za-z0-9-_]+
 ```
 
 ### 2. Input Validation
+**Vulnerabilities:**
+- SQL Injection.
+- XSS (Cross-Site Scripting).
+- Command Injection.
+- Path Traversal.
+- SSRF.
 
-**Vulnerabilidades:**
-- SQL Injection
-- XSS (Cross-Site Scripting)
-- Command Injection
-- Path Traversal
-- SSRF (Server-Side Request Forgery)
+**Verify:**
+- Sanitized user inputs.
+- Parameterized queries (NO concatenation).
+- Output encoding/escaping.
+- URL/Path validation.
 
-**Verificar:**
-- Inputs de usuario sanitizados
-- Queries parametrizadas (no concatenación)
-- Escape de HTML en outputs
-- Validación de URLs y paths
+### 3. Authentication & Authorization
+- Hashed passwords (bcrypt/argon2).
+- Token expiration.
+- Rate limiting on sensitive endpoints.
+- Permission checks on EVERY request.
 
-### 3. Autenticación y Autorización
+### 4. Sensitive Data
+- NO sensitive data in logs (PII, tokens).
+- Encryption at rest.
+- HTTPS everywhere.
+- Security Headers (HSTS, CSP).
 
-- Passwords hasheados (bcrypt, argon2)
-- Tokens con expiración
-- Rate limiting en endpoints sensibles
-- Verificación de permisos en cada request
-- CORS configurado correctamente
-
-### 4. Datos Sensibles
-
-- No loggear datos sensibles (passwords, tokens, PII)
-- Encryption at rest para datos sensibles
-- HTTPS en producción
-- Headers de seguridad (HSTS, CSP, etc.)
-
-### 5. Dependencias
-
+### 5. Supply Chain
 ```bash
-# Verificar vulnerabilidades
-npm audit              # Node.js
+# Audit commands
+npm audit              # Node
 pip-audit              # Python
-go vuln check ./...    # Go
+govulncheck ./...      # Go
 trivy fs .             # General
 ```
 
-### 6. Infraestructura (IaC)
-
-**Terraform/Kubernetes:**
-- Security groups sin 0.0.0.0/0 innecesario
-- Variables sensibles con `sensitive = true`
-- Pods no corriendo como root
-- Secrets en Secret Manager, no en código
-
-## Formato de Reporte
+## Report Format
 
 ```markdown
-## [🔴 CRITICAL] Título
+## [🔴 CRITICAL] Title
 
-**Archivo:** path/to/file:Línea
-**CWE:** CWE-XXX (si aplica)
+**File:** path/to/file:Line
+**CWE:** CWE-XXX
 
-**Vulnerabilidad:**
-Descripción del problema.
+**Vulnerability:**
+Description.
 
-**Impacto:**
-Qué podría pasar si se explota.
+**Impact:**
+What happens if exploited?
 
-**Remediación:**
-Cómo corregirlo con ejemplo.
+**Remediation:**
+How to fix (code example).
 ```
-
-## Severidades
-
-| Nivel | Criterio |
-|-------|----------|
-| 🔴 **CRITICAL** | Explotable remotamente, alto impacto |
-| 🟠 **HIGH** | Explotable con ciertas condiciones |
-| 🟡 **MEDIUM** | Requiere acceso interno o cadena de exploits |
-| 🟢 **LOW** | Best practice, bajo riesgo |

@@ -1,83 +1,56 @@
 ---
 name: fix-pr-comments
-description: Corregir comentarios de revisión de PR
+description: Systematically address PR review comments
 ---
 
-# Workflow: Corregir Comentarios de PR
+# Workflow: Fix PR Comments
 
-Procesar y corregir comentarios de revisión de manera sistemática.
+Systematically process and resolve PR review comments.
 
-## 1. Obtener Comentarios
+## 1. Fetch Comments
 
 ```bash
-# Ver PR y comentarios
+# View PR and comments
 gh pr view --comments
-gh pr view --json reviews -q '.reviews[].body'
-
-# Ver diff del PR
 gh pr diff
 ```
 
-## 2. Clasificar Comentarios
+## 2. Triage Comments
 
-| Tipo | Acción |
+| Type | Action |
 |------|--------|
-| 🔴 Error de código/bug | Corregir inmediatamente |
-| 🟠 Mejora de seguridad | Corregir |
-| 🟡 Sugerencia de estilo | Evaluar y aplicar si mejora |
-| 🟢 Mejora de docs | Aplicar si es relevante |
-| ⚪ Falso positivo | Explicar por qué no aplica |
+| 🔴 **Bug/Error** | Fix immediately. |
+| 🟠 **Security** | Fix immediately. |
+| 🟡 **Style/Nit** | Apply if it improves clarity. |
+| 🟢 **Docs** | Apply if relevant. |
+| ⚪ **False Positive** | Explain why it does not apply. |
 
-## 3. Procesar Cada Comentario
+## 3. Process Each Comment
 
-### Si es Válido
-1. Aplicar la corrección sugerida
-2. Ejecutar validaciones del proyecto
-3. Hacer commit con referencia al comentario:
-   ```bash
-   git commit -m "fix: address review comment - descripción"
-   ```
+### If Valid
+1.  Apply the fix.
+2.  Run validations (`make lint`, `make test`).
+3.  Commit with reference:
+    ```bash
+    git commit -m "fix: address review comment - description"
+    ```
 
-### Si es Inválido/Falso Positivo
-1. Preparar explicación clara del por qué
-2. Incluir referencias a documentación si aplica
-3. Sugerir alternativas si existen
+### If Invalid
+1.  Prepare a clear explanation.
+2.  Cite documentation/standards.
+3.  Suggest alternatives.
 
-## 4. Validar Cambios
-
-```bash
-# Formateo
-make fmt  # o comando específico del proyecto
-
-# Tests
-make test
-
-# Lint
-make lint
-```
-
-## 5. Resumen de Cambios
-
-```markdown
-## Comentarios Procesados
-
-### ✅ Corregidos
-- [Línea X] Descripción del fix
-- [Línea Y] Descripción del fix
-
-### ❌ No Aplica (con razón)
-- [Línea Z] Razón: explicación
-
-### 💬 Requiere Discusión
-- [Línea W] Pregunta o alternativas
-```
-
-## 6. Push y Notificar
+## 4. Verify Changes
 
 ```bash
-# Push cambios
+# Lint & Test
+make lint && make test
+# STOP if any checks fail
+```
+
+## 5. Push & Notify
+
+```bash
 git push origin <branch>
-
-# Comentar en PR que se procesaron los comentarios
-gh pr comment --body "Comentarios de revisión procesados. Ver commits recientes."
+gh pr comment --body "Review comments addressed. See recent commits."
 ```
