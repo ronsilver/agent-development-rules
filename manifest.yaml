@@ -1,5 +1,5 @@
 # =============================================================================
-# Agent Rules - Manifest de Configuración
+# Agent Rules - Manifest de Configuración v2.0
 # =============================================================================
 # Este archivo define la configuración central para sincronizar reglas
 # a diferentes agentes de AI (Windsurf, GitHub Copilot, Cursor, etc.)
@@ -7,51 +7,63 @@
 # Uso: ./scripts/sync.sh [--agent <nombre>] [--dry-run]
 # =============================================================================
 
-version: "1.0"
+version: "2.0"
 
 # =============================================================================
-# Archivos Fuente (reglas centralizadas)
+# Directorio de contenido (nueva estructura organizada)
 # =============================================================================
+
+content_dir: "content"
 
 rules:
   source_dir: "rules"
   files:
-    - global.md
-    - windsurf.md
-    - copilot.md
-    - clean-code.md
-    - accessibility.md
-    - linting.md
-    - git.md
-    - security.md
-    - testing.md
-    - performance.md
-    - scalability.md
-    - solid.md
-    - operational-excellence.md
-    - documentation.md
-    - terraform.md
-    - aws.md
-    - go.md
-    - python.md
-    - nodejs.md
-    - bash.md
-    - docker.md
-    - kubernetes.md
+    # Core - Reglas fundamentales
+    - core/global.md
+    - core/clean-code.md
+    - core/solid.md
+    # Languages - Por lenguaje
+    - languages/go.md
+    - languages/python.md
+    - languages/nodejs.md
+    - languages/bash.md
+    # Infrastructure - IaC y DevOps
+    - infrastructure/terraform.md
+    - infrastructure/docker.md
+    - infrastructure/kubernetes.md
+    - infrastructure/aws.md
+    # Quality - Calidad de código
+    - quality/testing.md
+    - quality/security.md
+    - quality/performance.md
+    - quality/scalability.md
+    - quality/linting.md
+    - quality/accessibility.md
+    # Process - Procesos de desarrollo
+    - process/git.md
+    - process/documentation.md
+    - process/operational-excellence.md
+    # Agents - Específico por agente
+    - agents/windsurf.md
+    - agents/copilot.md
 
 workflows:
   source_dir: "workflows"
   files:
-    - validate.md
-    - test.md
-    - lint.md
-    - pre-push.md
-    - pr-review.md
-    - fix-pr-comments.md
-    - terraform-module.md
-    - docker-build.md
-    - k8s-validate.md
-    - security-check.md
+    # Validation
+    - validation/validate.md
+    - validation/test.md
+    - validation/lint.md
+    # Git
+    - git/pre-push.md
+    - git/pr-review.md
+    - git/fix-pr-comments.md
+    # Infrastructure
+    - infrastructure/terraform-module.md
+    - infrastructure/docker-build.md
+    - infrastructure/k8s-validate.md
+    # Security
+    - security/security-check.md
 
 prompts:
   source_dir: "prompts"
@@ -62,6 +74,9 @@ prompts:
     - refactor.prompt.md
     - document.prompt.md
     - validate.prompt.md
+    - commit.prompt.md
+    - explain.prompt.md
+    - debug.prompt.md
 
 # =============================================================================
 # Configuración por Agente

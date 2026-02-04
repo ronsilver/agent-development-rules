@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # =============================================================================
-# sync.sh - Script unificado para sincronizar reglas a agentes de AI
+# sync.sh - Script unificado para sincronizar reglas a agentes de AI v2.0
 # =============================================================================
 # Lee configuración de manifest.yaml y sincroniza reglas, workflows y prompts
 # a los destinos configurados para cada agente.
@@ -12,52 +12,24 @@ set -euo pipefail
 #   ./scripts/sync.sh --agent windsurf   # Sincroniza solo un agente
 #   ./scripts/sync.sh --dry-run          # Muestra qué haría sin ejecutar
 #   ./scripts/sync.sh --list             # Lista agentes disponibles
+#   ./scripts/sync.sh --backup           # Crear backup antes de escribir
+#   ./scripts/sync.sh --validate         # Validar antes de sincronizar
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "${SCRIPT_DIR}")"
 MANIFEST_FILE="${REPO_ROOT}/manifest.yaml"
 
-# Colores para output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
+# Cargar funciones comunes
+source "${SCRIPT_DIR}/lib/common.sh"
 
 # Variables globales
 DRY_RUN=false
 SPECIFIC_AGENT=""
+CREATE_BACKUP=false
+VALIDATE_FIRST=false
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
-
-# =============================================================================
-# Funciones de logging
-# =============================================================================
-
-log_info() {
-    echo -e "${GREEN}[INFO]${NC} $1" >&2
-}
-
-log_warn() {
-    echo -e "${YELLOW}[WARN]${NC} $1" >&2
-}
-
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $1" >&2
-}
-
-log_debug() {
-    if [[ "${DEBUG:-false}" == "true" ]]; then
-        echo -e "${CYAN}[DEBUG]${NC} $1" >&2
-    fi
-}
-
-log_section() {
-    echo -e "\n${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}" >&2
-    echo -e "${BLUE}  $1${NC}" >&2
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}" >&2
-}
+CONTENT_DIR=""
 
 # =============================================================================
 # Verificar dependencias
@@ -77,30 +49,6 @@ check_dependencies() {
     fi
 }
 
-# =============================================================================
-# Funciones de utilidad
-# =============================================================================
-
-# Expandir variables de entorno en un string
-expand_path() {
-    local path="$1"
-    eval echo "$path"
-}
-
-# Extraer contenido sin frontmatter YAML
-extract_content() {
-    local file="$1"
-    awk '
-        BEGIN { in_frontmatter=0; found_end=0 }
-        /^---$/ && !found_end {
-            if (in_frontmatter) { found_end=1; next }
-            in_frontmatter=1
-            next
-        }
-        found_end { print }
-    ' "${file}"
-}
-
 # Verificar si un agente está habilitado
 is_agent_enabled() {
     local agent="$1"
@@ -116,7 +64,7 @@ get_source_files() {
     source_dir=$(yq ".${type}.source_dir" "${MANIFEST_FILE}")
 
     yq ".${type}.files[]" "${MANIFEST_FILE}" | while read -r file; do
-        local full_path="${REPO_ROOT}/${source_dir}/${file}"
+        local full_path="${CONTENT_DIR}/${source_dir}/${file}"
         if [[ -f "${full_path}" ]]; then
             echo "${full_path}"
         else
@@ -312,6 +260,14 @@ parse_args() {
                 DRY_RUN=true
                 shift
                 ;;
+            --backup|-b)
+                CREATE_BACKUP=true
+                shift
+                ;;
+            --validate|-v)
+                VALIDATE_FIRST=true
+                shift
+                ;;
             --list|-l)
                 list_agents
                 exit 0
@@ -326,6 +282,8 @@ parse_args() {
                 echo "Opciones:"
                 echo "  --agent, -a <nombre>  Sincronizar solo un agente específico"
                 echo "  --dry-run, -n         Mostrar qué haría sin ejecutar"
+                echo "  --backup, -b          Crear backup antes de escribir"
+                echo "  --validate, -v        Validar configuración antes de sincronizar"
                 echo "  --list, -l            Listar agentes disponibles"
                 echo "  --debug, -d           Mostrar información de debug"
                 echo "  --help, -h            Mostrar esta ayuda"
@@ -354,12 +312,37 @@ main() {
 
     check_dependencies
 
-    log_section "Agent Rules - Sincronización"
+    # Obtener directorio de contenido desde manifest (v2.0)
+    local content_dir_name
+    content_dir_name=$(yq '.content_dir // ""' "${MANIFEST_FILE}")
+    if [[ -n "${content_dir_name}" && "${content_dir_name}" != "null" ]]; then
+        CONTENT_DIR="${REPO_ROOT}/${content_dir_name}"
+    else
+        # Fallback para v1.0 (compatibilidad)
+        CONTENT_DIR="${REPO_ROOT}"
+    fi
+
+    log_section "Agent Rules - Sincronización v2.0"
     log_info "Manifest: ${MANIFEST_FILE}"
+    log_info "Content: ${CONTENT_DIR}"
     log_info "Timestamp: ${TIMESTAMP}"
 
     if [[ "${DRY_RUN}" == "true" ]]; then
         log_warn "Modo DRY-RUN activado - no se realizarán cambios"
+    fi
+
+    if [[ "${CREATE_BACKUP}" == "true" ]]; then
+        log_info "Backups habilitados"
+    fi
+
+    # Validar si se solicitó
+    if [[ "${VALIDATE_FIRST}" == "true" ]]; then
+        log_info "Ejecutando validación..."
+        if [[ -x "${SCRIPT_DIR}/validate.sh" ]]; then
+            "${SCRIPT_DIR}/validate.sh" || exit 1
+        else
+            log_warn "validate.sh no encontrado, saltando validación"
+        fi
     fi
 
     if [[ -n "${SPECIFIC_AGENT}" ]]; then

@@ -1,3 +1,13 @@
+---
+name: Test
+description: Generate comprehensive tests following Test Pyramid and AAA pattern
+trigger: manual
+tags:
+  - testing
+  - unit-tests
+  - tdd
+---
+
 # Test
 
 Generate comprehensive tests for the selected code following the **Test Pyramid** and **AAA pattern**.

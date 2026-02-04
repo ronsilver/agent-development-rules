@@ -1,3 +1,13 @@
+---
+name: Validate
+description: Validate project using appropriate tools for quality and correctness
+trigger: manual
+tags:
+  - validation
+  - linting
+  - quality
+---
+
 # Validate
 
 Validate the current project using appropriate tools to ensure code quality, correctness, and security.

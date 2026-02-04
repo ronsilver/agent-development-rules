@@ -1,3 +1,13 @@
+---
+name: Security
+description: Analyze code for security vulnerabilities based on OWASP and CWE
+trigger: manual
+tags:
+  - security
+  - owasp
+  - vulnerability
+---
+
 # Security Check
 
 Analyze code for security vulnerabilities based on **OWASP Top 10:2025** and **CWE Top 25**.

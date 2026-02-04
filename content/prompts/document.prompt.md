@@ -1,3 +1,13 @@
+---
+name: Document
+description: Generate comprehensive documentation focusing on Why over What
+trigger: manual
+tags:
+  - documentation
+  - readme
+  - api-docs
+---
+
 # Document
 
 Generate comprehensive documentation for the selected code or project. Focus on **"Why"** over **"What"**.

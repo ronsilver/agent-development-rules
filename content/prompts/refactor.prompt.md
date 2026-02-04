@@ -1,3 +1,13 @@
+---
+name: Refactor
+description: Refactor code while maintaining existing behavior
+trigger: manual
+tags:
+  - refactoring
+  - clean-code
+  - maintainability
+---
+
 # Refactor
 
 Refactor the selected code while **maintaining existing behavior**. Focus on improving readability, maintainability, and testability.
