@@ -57,6 +57,48 @@ is_agent_enabled() {
     [[ "${enabled}" == "true" ]]
 }
 
+# Verificar si un agente está instalado
+is_agent_installed() {
+    local agent="$1"
+    local detect_config=".agents.${agent}.detect"
+    
+    # Si no hay configuración de detección, asumir instalado
+    if [[ $(yq "${detect_config}" "${MANIFEST_FILE}") == "null" ]]; then
+        return 0
+    fi
+    
+    # Verificar paths (cualquiera que exista)
+    local paths
+    paths=$(yq "${detect_config}.paths[]" "${MANIFEST_FILE}" 2>/dev/null || echo "")
+    if [[ -n "${paths}" ]]; then
+        while IFS= read -r path; do
+            # Expandir variables de entorno
+            local expanded_path
+            expanded_path=$(eval echo "${path}")
+            # Soportar globs
+            if compgen -G "${expanded_path}" > /dev/null 2>&1; then
+                log_debug "Detectado ${agent} via path: ${expanded_path}"
+                return 0
+            fi
+        done <<< "${paths}"
+    fi
+    
+    # Verificar comandos (cualquiera que funcione)
+    local commands
+    commands=$(yq "${detect_config}.commands[]" "${MANIFEST_FILE}" 2>/dev/null || echo "")
+    if [[ -n "${commands}" ]]; then
+        while IFS= read -r cmd; do
+            if [[ -n "${cmd}" ]] && eval "${cmd}" &>/dev/null; then
+                log_debug "Detectado ${agent} via comando: ${cmd}"
+                return 0
+            fi
+        done <<< "${commands}"
+    fi
+    
+    # Si hay configuración pero no se detectó nada
+    return 1
+}
+
 # Obtener lista de archivos para un tipo (rules, workflows, prompts)
 get_source_files() {
     local type="$1"
@@ -202,6 +244,12 @@ sync_agent() {
     local description
     description=$(yq ".agents.${agent}.description // \"${agent}\"" "${MANIFEST_FILE}")
 
+    # Verificar si el agente está instalado
+    if ! is_agent_installed "${agent}"; then
+        log_debug "Agente '${agent}' no está instalado - saltando"
+        return 0
+    fi
+
     log_section "Sincronizando: ${description}"
 
     # Sincronizar rules
@@ -215,6 +263,10 @@ sync_agent() {
     # Sincronizar prompts
     log_info "Sincronizando prompts..."
     sync_merged "${agent}" "prompts" "prompts"
+
+    # Sincronizar instructions (para agentes que lo soporten)
+    log_info "Sincronizando instructions..."
+    sync_merged "${agent}" "instructions" "rules"
 }
 
 # =============================================================================
@@ -240,8 +292,16 @@ list_agents() {
             status_text="habilitado"
         fi
 
+        # Verificar instalación
+        local install_color="${RED}"
+        local install_text="no instalado"
+        if is_agent_installed "${agent}"; then
+            install_color="${GREEN}"
+            install_text="instalado"
+        fi
+
         echo -e "  ${CYAN}${agent}${NC} - ${description}"
-        echo -e "    Estado: ${status_color}${status_text}${NC}"
+        echo -e "    Estado: ${status_color}${status_text}${NC} | ${install_color}${install_text}${NC}"
     done <<< "${agents}"
 }
 

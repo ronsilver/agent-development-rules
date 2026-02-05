@@ -86,6 +86,12 @@ agents:
   windsurf:
     enabled: true
     description: "Windsurf IDE / Codeium Cascade"
+    detect:
+      # Detectar si Windsurf está instalado
+      paths:
+        - "${HOME}/.codeium"
+        - "/Applications/Windsurf.app"
+      commands: []
     targets:
       rules:
         path: "${HOME}/.codeium/memories/global_rules.md"
@@ -116,14 +122,35 @@ agents:
           <!-- Generado automáticamente por sync.sh -->
           <!-- Última actualización: {{timestamp}} -->
 
-  github-copilot:
+  copilot-cli:
     enabled: true
-    description: "GitHub Copilot (VS Code / IntelliJ)"
+    description: "GitHub Copilot CLI (gh copilot)"
+    detect:
+      paths: []
+      commands:
+        - "gh copilot --version"
+    targets:
+      instructions:
+        path: "${HOME}/.config/gh-copilot/instructions.md"
+        format: merged
+        strip_frontmatter: true
+        header: |
+          # GitHub Copilot CLI - Global Instructions
+
+          <!-- Generado automáticamente por sync.sh -->
+          <!-- Última actualización: {{timestamp}} -->
+
+  copilot-vscode:
+    enabled: true
+    description: "GitHub Copilot (VS Code)"
+    detect:
+      paths:
+        - "${HOME}/.vscode/extensions"
+      commands:
+        - "code --list-extensions 2>/dev/null | grep -q github.copilot"
     targets:
       rules:
-        paths:
-          - "${HOME}/.config/github-copilot/intellij"
-          - "${HOME}/Library/Application Support/Code/User/prompts"
+        path: "${HOME}/Library/Application Support/Code/User/prompts"
         glob_paths:
           - "${HOME}/.vscode/extensions/github.copilot-chat-*/assets/prompts"
         format: merged
@@ -139,9 +166,42 @@ agents:
           <!-- Última actualización: {{timestamp}} -->
 
       prompts:
-        paths:
-          - "${HOME}/.config/github-copilot/intellij"
-          - "${HOME}/Library/Application Support/Code/User/prompts"
+        path: "${HOME}/Library/Application Support/Code/User/prompts"
+        format: merged
+        output_filename: "default.prompt.md"
+        strip_frontmatter: true
+        header: |
+          ---
+          description: Prompts reutilizables para tareas comunes
+          ---
+
+          <!-- Generado automáticamente por sync.sh -->
+          <!-- Última actualización: {{timestamp}} -->
+
+  copilot-intellij:
+    enabled: true
+    description: "GitHub Copilot (IntelliJ/JetBrains)"
+    detect:
+      paths:
+        - "${HOME}/Library/Application Support/JetBrains/*/plugins/github-copilot-intellij"
+      commands: []
+    targets:
+      rules:
+        path: "${HOME}/.config/github-copilot/intellij"
+        format: merged
+        output_filename: "Default.instructions.md"
+        strip_frontmatter: true
+        header: |
+          ---
+          applyTo: "**"
+          description: Instrucciones globales de desarrollo
+          ---
+
+          <!-- Generado automáticamente por sync.sh -->
+          <!-- Última actualización: {{timestamp}} -->
+
+      prompts:
+        path: "${HOME}/.config/github-copilot/intellij"
         format: merged
         output_filename: "default.prompt.md"
         strip_frontmatter: true
@@ -154,13 +214,114 @@ agents:
           <!-- Última actualización: {{timestamp}} -->
 
   cursor:
-    enabled: false
+    enabled: true
     description: "Cursor IDE"
+    detect:
+      paths:
+        - "/Applications/Cursor.app"
+        - "${HOME}/.cursor"
+      commands: []
     targets:
       rules:
-        path: "${HOME}/.cursor/rules/global.md"
+        path: "${HOME}/.cursor/rules"
+        format: individual
+        output_extension: ".mdc"
+        strip_frontmatter: false
+        transform_frontmatter: true  # paths -> globs, add description
+        header: |
+          ---
+          description: "{{name}}"
+          globs: []
+          alwaysApply: true
+          ---
+
+  claude-code:
+    enabled: true
+    description: "Claude Code (Anthropic)"
+    detect:
+      paths:
+        - "${HOME}/.claude"
+      commands: []
+    targets:
+      rules:
+        path: "${HOME}/.claude/rules"
+        format: individual
+        strip_frontmatter: false
+      instructions:
+        path: "${HOME}/.claude/CLAUDE.md"
         format: merged
         strip_frontmatter: true
+        header: |
+          # Claude Code - Global Instructions
+
+          <!-- Generado automáticamente por sync.sh -->
+          <!-- Última actualización: {{timestamp}} -->
+
+  codex-cli:
+    enabled: true
+    description: "OpenAI Codex CLI"
+    detect:
+      paths: []
+      commands:
+        - "codex --version"
+    targets:
+      rules:
+        path: "${HOME}/.codex/rules"
+        format: individual
+        strip_frontmatter: false
+      instructions:
+        path: "${HOME}/.codex/AGENTS.md"
+        format: merged
+        strip_frontmatter: true
+        header: |
+          # Codex CLI - Global Instructions
+
+          <!-- Generado automáticamente por sync.sh -->
+          <!-- Última actualización: {{timestamp}} -->
+
+  gemini-cli:
+    enabled: true
+    description: "Google Gemini CLI"
+    detect:
+      paths: []
+      commands:
+        - "gemini --version"
+    targets:
+      rules:
+        path: "${HOME}/.gemini/rules"
+        format: individual
+        strip_frontmatter: false
+      instructions:
+        path: "${HOME}/.gemini/GEMINI.md"
+        format: merged
+        strip_frontmatter: true
+        header: |
+          # Gemini CLI - Global Instructions
+
+          <!-- Generado automáticamente por sync.sh -->
+          <!-- Última actualización: {{timestamp}} -->
+
+  opencode:
+    enabled: true
+    description: "OpenCode"
+    detect:
+      paths: []
+      commands:
+        - "opencode --version"
+    targets:
+      rules:
+        path: "${HOME}/.opencode/rules"
+        format: individual
+        strip_frontmatter: false
+      instructions:
+        path: "${HOME}/.opencode/AGENTS.md"
+        format: merged
+        strip_frontmatter: true
+        header: |
+          # OpenCode - Global Instructions
+
+          <!-- Generado automáticamente por sync.sh -->
+          <!-- Última actualización: {{timestamp}} -->
 
   local-project:
     enabled: false
