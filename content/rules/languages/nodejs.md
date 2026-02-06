@@ -73,42 +73,30 @@ src/
 
 ESLint v9+ uses **flat config** (`eslint.config.js`) instead of `.eslintrc.*`. This is the **new standard for 2025**.
 
-**Legacy** (deprecated):
+**Legacy** (deprecated - do NOT use):
 ```json
-// .eslintrc.json
+// .eslintrc.json - DEPRECATED in ESLint v9+
 {
   "extends": ["eslint:recommended"],
   "rules": {}
 }
 ```
 
-**Modern** (flat config):
+**Modern** (flat config - use this):
 ```javascript
-// eslint.config.js
-import js from '@eslint/js';
-import tseslint from '@typescript-eslint/eslint-plugin';
-import tsParser from '@typescript-eslint/parser';
+// eslint.config.js - Using unified typescript-eslint package
+import tseslint from 'typescript-eslint';
 
-export default [
-  js.configs.recommended,
+export default tseslint.config(
+  ...tseslint.configs.recommended,
   {
-    files: ['**/*.ts', '**/*.tsx'],
-    languageOptions: {
-      parser: tsParser,
-      parserOptions: {
-        project: './tsconfig.json',
-      },
-    },
-    plugins: {
-      '@typescript-eslint': tseslint,
-    },
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': 'error',
       '@typescript-eslint/explicit-function-return-type': 'warn',
     },
   },
-];
+);
 ```
 
 ### TypeScript ESLint Configurations
@@ -270,11 +258,12 @@ export default defineConfig({
         '**/*.test.ts',
         '**/*.config.*',
       ],
+      // Align with testing.md coverage requirements (70% overall)
       thresholds: {
-        lines: 80,
-        functions: 80,
-        branches: 80,
-        statements: 80,
+        lines: 70,
+        functions: 70,
+        branches: 70,
+        statements: 70,
       },
     },
   },

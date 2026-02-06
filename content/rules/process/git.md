@@ -26,7 +26,6 @@ globs: [".github/**", "*.yml", "*.yaml", ".gitignore", "*.md"]
 
 ### DIRECTIVES - STRICT ENFORCEMENT
 
-<!-- windsurf-memory: strict_commit_format -->
 The agent MUST always generate commits matching the Conventional Commits regex.
 The agent MUST NEVER generate commits with the following generic messages:
 - "update"
@@ -34,7 +33,6 @@ The agent MUST NEVER generate commits with the following generic messages:
 - "changes"
 - "wip"
 If the user asks for a quick save, the agent MUST still infer a proper message or ask for one.
-<!-- /windsurf-memory -->
 
 #### Subject Line Rules
 1.  **Imperative Mood**: Use `add`, `fix`, `update`, NOT `added`, `fixed`, `updates`.

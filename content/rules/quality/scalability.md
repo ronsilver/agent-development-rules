@@ -136,40 +136,36 @@ def create_order():
 
 ## Caching Strategy
 
-### Cache-Aside Pattern
-```python
-def get_user(user_id):
-    # 1. Check cache
-    cached = redis.get(f"user:{user_id}")
-    if cached:
-        return json.loads(cached)
+> For cache-aside pattern, TTL guidelines, and cache key design, see **performance.md § Caching**.
 
-    # 2. Cache miss - fetch from DB
-    user = db.query(User).get(user_id)
+### Multi-Level Caching
 
-    # 3. Populate cache with TTL
-    redis.setex(f"user:{user_id}", 300, json.dumps(user.to_dict()))
-
-    return user
+```
+Request → L1 (In-Process) → L2 (Redis/Memcached) → L3 (Database)
 ```
 
-### Cache Invalidation
+| Level | Technology | Latency | Use Case |
+|-------|-----------|---------|----------|
+| **L1** | In-process (LRU) | ~1μs | Hot data, config |
+| **L2** | Redis / Memcached | ~1ms | Shared across instances |
+| **L3** | Database | ~10ms | Source of truth |
+
+### Cache Invalidation Strategies
+
+| Strategy | When to Use | Trade-off |
+|----------|-------------|-----------|
+| **TTL-based** | Eventual consistency OK | Simple, may serve stale data |
+| **Event-driven** | Consistency required | Complex, needs pub/sub |
+| **Write-through** | Read-heavy workloads | Higher write latency |
+| **Write-behind** | Write-heavy workloads | Risk of data loss |
+
 ```python
+# Event-driven invalidation with Redis pub/sub
 def update_user(user_id, data):
-    # Update database
     db.query(User).filter_by(id=user_id).update(data)
-
-    # Invalidate cache
     redis.delete(f"user:{user_id}")
+    redis.publish("cache:invalidate", json.dumps({"key": f"user:{user_id}"}))
 ```
-
-**TTL Guidelines:**
-| Data Type | TTL | Reason |
-|-----------|-----|--------|
-| Static config | 24h | Rarely changes |
-| User profiles | 5-15min | Balance freshness/load |
-| Session data | 1h | Security |
-| Search results | 1-5min | Acceptable staleness |
 
 ## Resilience Patterns
 

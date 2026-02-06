@@ -114,11 +114,11 @@ Format → Lint → Type Check → Test → Security Scan
 
 | Tool | Purpose | Speed | Required |
 |------|---------|-------|----------|
-| `kubeval` | YAML schema validation | ⚡ Fast | ✅ Yes |
+| `kubeconform` | YAML schema validation | ⚡ Fast | ✅ Yes |
 | `helm lint` | Helm chart validation | ⚡ Fast | ✅ Yes (if Helm) |
 | `datree` | Best practices | 🔥 Medium | ⚠️ Recommended |
 
-**Runs**: `kubeval *.yaml && helm lint ./chart`
+**Runs**: `kubeconform -strict *.yaml && helm lint ./chart`
 
 ## Pre-commit Hooks
 
@@ -179,26 +179,45 @@ name: Lint
 
 on:
   pull_request:
-    paths:
-      - '**.go'
-      - '**.py'
-      - '**.ts'
 
 jobs:
-  lint:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      go: ${{ steps.filter.outputs.go }}
+      python: ${{ steps.filter.outputs.python }}
+      typescript: ${{ steps.filter.outputs.typescript }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            go:
+              - '**/*.go'
+            python:
+              - '**/*.py'
+            typescript:
+              - '**/*.ts'
+              - '**/*.tsx'
+
+  go-lint:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.go == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Go Lint
-        if: contains(github.event.pull_request.files, '.go')
-        uses: golangci/golangci-lint-action@v4
+      - uses: golangci/golangci-lint-action@v4
         with:
           version: v2.1.2
 
-      - name: Python Lint
-        if: contains(github.event.pull_request.files, '.py')
-        run: |
+  python-lint:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
           pip install ruff mypy
           ruff check .
           mypy src/

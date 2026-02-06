@@ -1,6 +1,5 @@
 ---
-trigger: glob
-globs: ["*"]
+trigger: always
 ---
 
 # GitHub Copilot Agent Rules

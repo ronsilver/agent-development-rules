@@ -185,6 +185,25 @@ import DOMPurify from 'dompurify';
 element.innerHTML = DOMPurify.sanitize(userInput);
 ```
 
+## A06:2025 - Vulnerable and Outdated Components
+
+**Principle: Know your dependencies**
+
+```bash
+# Audit dependencies regularly
+npm audit --audit-level=high          # Node.js
+pip-audit                              # Python
+govulncheck ./...                      # Go
+trivy fs . --severity HIGH,CRITICAL   # Multi-language
+```
+
+**Best Practices:**
+- Pin dependency versions in lock files (`package-lock.json`, `poetry.lock`, `go.sum`).
+- Enable automated dependency updates (Dependabot, Renovate).
+- Remove unused dependencies: `npx depcheck`, `pip-extra-reqs`.
+- Monitor CVE databases for critical vulnerabilities.
+- Set a maximum age for unpatched HIGH/CRITICAL vulnerabilities (e.g., 7 days).
+
 ## A07:2025 - Authentication Failures
 
 **Session Security:**
@@ -207,6 +226,39 @@ response.set_cookie(
 - Check against breached password lists (HaveIBeenPwned API)
 - No complexity rules (NIST 800-63B)
 - Rate limit login attempts
+
+## A08:2025 - Software and Data Integrity Failures
+
+**Principle: Verify integrity of all software and data**
+
+```yaml
+# ❌ Vulnerable - Unsigned pipeline actions
+uses: actions/checkout@v4
+
+# ✅ Secure - Pinned by SHA (see A03)
+uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+```
+
+**Best Practices:**
+- Verify checksums/signatures for downloaded artifacts and dependencies.
+- Use Subresource Integrity (SRI) for CDN-loaded scripts:
+  ```html
+  <script src="https://cdn.example.com/lib.js"
+          integrity="sha384-abc123..."
+          crossorigin="anonymous"></script>
+  ```
+- Protect CI/CD pipelines: restrict who can modify workflows, require approvals.
+- Never deserialize untrusted data without validation:
+  ```python
+  # ❌ VULNERABLE - Arbitrary code execution
+  import pickle
+  data = pickle.loads(user_input)
+
+  # ✅ SAFE - Structured format with schema
+  import json
+  data = json.loads(user_input)
+  validated = MySchema.parse_obj(data)
+  ```
 
 ## A09:2025 - Logging & Monitoring
 
@@ -232,6 +284,26 @@ logger.info(f"User login: {username}, password: {password}")
 
 # ✅ Good - Sanitized
 logger.info(f"User login: {username}")
+```
+
+## A10:2025 - Server-Side Request Forgery (SSRF)
+
+> SSRF prevention is also covered in **A01 § SSRF Prevention** with network blocking examples.
+
+**Additional Protections:**
+- Use allowlists for permitted domains/URLs instead of blocklists.
+- Disable HTTP redirects or validate each redirect destination.
+- Do not expose raw HTTP responses from internal services to users.
+
+```python
+# ✅ Allowlist approach (preferred over blocklist)
+ALLOWED_DOMAINS = {"api.example.com", "cdn.example.com"}
+
+def fetch_url(user_url: str) -> bytes:
+    parsed = urlparse(user_url)
+    if parsed.hostname not in ALLOWED_DOMAINS:
+        raise SecurityError(f"Domain not allowed: {parsed.hostname}")
+    return requests.get(user_url, allow_redirects=False, timeout=5).content
 ```
 
 ## Input Validation - MANDATORY

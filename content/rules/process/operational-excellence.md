@@ -72,21 +72,23 @@ Every alert **MUST** have a linked Runbook in the annotation.
 
 ## 3. Reliability Patterns
 
-### Circuit Breaker
-Prevent cascading failures. If a dependency fails repeatedly, fail fast.
+> For implementation details (code examples, libraries), see **scalability.md § Resilience Patterns**.
 
-### Retry with Exponential Backoff
-Never retry in a tight loop. Use Jitter.
+### Patterns Summary
 
-```python
-# ✅ Backoff with Jitter
-wait = min(cap, base * 2 ** attempt)
-wait += random.uniform(0, 1)
-time.sleep(wait)
-```
+| Pattern | Purpose | Monitor |
+|---------|---------|---------|
+| **Circuit Breaker** | Fail fast on unhealthy deps | Circuit state (open/closed/half-open) |
+| **Retry + Backoff** | Handle transient failures | Retry count, success after retry |
+| **Rate Limiting** | Protect from overload | 429 response rate, queue depth |
+| **Bulkhead** | Isolate failure domains | Thread pool utilization per dependency |
 
-### Rate Limiting
-Protect your service from overload. Reject excess traffic with `429 Too Many Requests`.
+### Operational Considerations
+
+- **Alert on circuit open**: Indicates dependency failure, requires investigation.
+- **Track retry exhaustion**: High retry failure rate signals systemic issues.
+- **Dashboard rate limit hits**: Spike in 429s may indicate legitimate traffic growth or abuse.
+- **Set timeouts**: Every external call must have a timeout. Default: 5s for APIs, 30s for batch.
 
 ## 4. Deployment Safety
 

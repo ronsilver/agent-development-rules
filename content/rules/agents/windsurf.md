@@ -1,6 +1,5 @@
 ---
-trigger: glob
-globs: ["*"]
+trigger: always
 ---
 
 # Windsurf / Cascade Agent Rules
@@ -13,37 +12,13 @@ globs: ["*"]
 
 ## 2. Commit Generation - STRICT ENFORCEMENT
 
-**CRITICAL**: When asked to generate commits or when writing commit messages (e.g., via slash commands or auto-commit), you **MUST** follow the **Conventional Commits** standard strictly.
+**CRITICAL**: You **MUST** follow the **Conventional Commits** standard strictly as defined in **git.md § Commit Messages**.
 
-### Format Pattern
-```
-<type>(<scope>): <subject>
-
-<body>
-
-<footer>
-```
-
-### Allowed Types
-- **feat**: New feature
-- **fix**: Bug fix
-- **docs**: Documentation only
-- **style**: Formatting, missing semi-colons, etc. (no code change)
-- **refactor**: Code change that neither fixes a bug nor adds a feature
-- **perf**: Improvements that optimize performance
-- **test**: Adding or correcting tests
-- **chore**: Build process, aux tools, dependencies
-
-### Directives
-1. **NEVER** use generic messages like "update", "changes", "fix".
-2. **ALWAYS** specify the scope (filename, module, or component).
-3. **Subject** must be imperative, lowercase, no period at end (e.g., "add logic" NOT "Added logic.").
-4. **Body** (optional but recommended) explains *what* and *why*, not *how*.
-
-### Example Valid Commits
-- `feat(auth): implement jwt token rotation`
-- `fix(user-service): correct email validation regex`
-- `refactor(utils): split date helper into separate module`
+### Windsurf-Specific Directives
+1. **NEVER** generate generic messages like "update", "changes", "fix", even if the user asks for a "quick save".
+2. **ALWAYS** infer a proper scope and descriptive subject from the staged changes.
+3. When using auto-commit or slash commands, analyze `git diff --staged` to determine the appropriate type and scope.
+4. If the change spans multiple unrelated areas, suggest splitting into separate commits.
 
 ## 3. Architecture & Context
 

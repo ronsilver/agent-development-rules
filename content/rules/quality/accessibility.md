@@ -9,8 +9,8 @@ globs: ["*.html", "*.jsx", "*.tsx", "*.vue", "*.svelte", "*.php", "*.erb"]
 
 Strive for **Level AA** compliance.
 
-### The POLL Principles
-- **Perceivable**: Users must differenciate content (Color contrast, Alt text).
+### The POUR Principles
+- **Perceivable**: Users must differentiate content (Color contrast, Alt text).
 - **Operable**: UI components must be navigable (Keyboard navigation, No focus traps).
 - **Understandable**: Info and UI must be readable (Form labels, Error handling).
 - **Robust**: Content must be interpreted by variety of agents (Semantic HTML, ARIA).
