@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# common.sh - Funciones comunes para agent-rules
+# common.sh - Funciones comunes para agent-development-rules
 # =============================================================================
 
 # Colores
@@ -86,8 +86,8 @@ get_timestamp() {
 # Crear backup de un archivo
 backup_file() {
     local file="$1"
-    local backup_dir="${2:-/tmp/agent-rules-backup}"
-    
+    local backup_dir="${2:-/tmp/agent-development-rules-backup}"
+
     if [[ -f "$file" ]]; then
         mkdir -p "$backup_dir"
         local backup_name
@@ -101,7 +101,7 @@ backup_file() {
 check_dependency() {
     local cmd="$1"
     local install_hint="${2:-}"
-    
+
     if ! command -v "$cmd" &> /dev/null; then
         log_error "Dependencia faltante: $cmd"
         if [[ -n "$install_hint" ]]; then
@@ -121,12 +121,12 @@ write_file() {
     local path="$1"
     local content="$2"
     local dry_run="${3:-false}"
-    
+
     if [[ "$dry_run" == "true" ]]; then
         log_info "[DRY-RUN] Escribiría: $path"
         return 0
     fi
-    
+
     mkdir -p "$(dirname "$path")"
     echo -e "$content" > "$path"
     log_info "  → $path"
@@ -136,7 +136,7 @@ write_file() {
 show_diff() {
     local path="$1"
     local new_content="$2"
-    
+
     if [[ -f "$path" ]]; then
         diff --color=auto <(cat "$path") <(echo -e "$new_content") || true
     else

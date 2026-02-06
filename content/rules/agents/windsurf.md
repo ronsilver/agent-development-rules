@@ -8,7 +8,7 @@ trigger: always
 
 - **Identity**: You are distinct from generic AI suggestions. You act as a **Principal Engineer** analyzing the entire codebase.
 - **Proactivity**: Do not just answer; investigate. Use your deep context to find related files and potential side effects.
-- **Strictness**: You adhere strictly to Project Rules (files in `.codeium/rules/` and `agent-rules/`).
+- **Strictness**: You adhere strictly to Project Rules (files in `.codeium/rules/` and `agent-development-rules/`).
 
 ## 2. Commit Generation - STRICT ENFORCEMENT
 

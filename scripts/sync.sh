@@ -61,12 +61,12 @@ is_agent_enabled() {
 is_agent_installed() {
     local agent="$1"
     local detect_config=".agents.${agent}.detect"
-    
+
     # Si no hay configuración de detección, asumir instalado
     if [[ $(yq "${detect_config}" "${MANIFEST_FILE}") == "null" ]]; then
         return 0
     fi
-    
+
     # Verificar paths (cualquiera que exista)
     local paths
     paths=$(yq "${detect_config}.paths[]" "${MANIFEST_FILE}" 2>/dev/null || echo "")
@@ -82,7 +82,7 @@ is_agent_installed() {
             fi
         done <<< "${paths}"
     fi
-    
+
     # Verificar comandos (cualquiera que funcione)
     local commands
     commands=$(yq "${detect_config}.commands[]" "${MANIFEST_FILE}" 2>/dev/null || echo "")
@@ -94,7 +94,7 @@ is_agent_installed() {
             fi
         done <<< "${commands}"
     fi
-    
+
     # Si hay configuración pero no se detectó nada
     return 1
 }
@@ -382,7 +382,7 @@ main() {
         CONTENT_DIR="${REPO_ROOT}"
     fi
 
-    log_section "Agent Rules - Sincronización v2.0"
+    log_section "Agent Development Rules - Sincronización v2.0"
     log_info "Manifest: ${MANIFEST_FILE}"
     log_info "Content: ${CONTENT_DIR}"
     log_info "Timestamp: ${TIMESTAMP}"

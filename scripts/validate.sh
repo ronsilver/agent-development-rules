@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # =============================================================================
-# validate.sh - Validar configuración de agent-rules
+# validate.sh - Validar configuración de agent-development-rules
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -293,7 +293,7 @@ main() {
         esac
     done
 
-    log_section "Agent Rules - Validación"
+    log_section "Agent Development Rules - Validación"
 
     # Verificar dependencias
     if ! command -v yq &> /dev/null; then

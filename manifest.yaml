@@ -1,5 +1,5 @@
 # =============================================================================
-# Agent Rules - Manifest de Configuración v2.0
+# Agent Development Rules - Manifest de Configuración v2.0
 # =============================================================================
 # Este archivo define la configuración central para sincronizar reglas
 # a diferentes agentes de AI (Windsurf, GitHub Copilot, Cursor, etc.)

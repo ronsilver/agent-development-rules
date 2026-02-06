@@ -1,11 +1,11 @@
-# Agent Rules
+# Agent Development Rules
 
-Centralized development rules for AI agents (Windsurf, GitHub Copilot, Cursor, Claude Code, Codex CLI, Gemini CLI, OpenCode).
+Centralized development rules for AI coding agents (Windsurf, GitHub Copilot, Cursor, Claude Code, Codex CLI, Gemini CLI, OpenCode).
 
 ## Structure
 
 ```
-agent-rules/
+agent-development-rules/
 ├── manifest.yaml              # Central configuration (v2.0)
 │
 ├── content/                   # All source content
