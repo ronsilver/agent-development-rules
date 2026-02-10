@@ -1,9 +1,11 @@
 ---
 name: Validate
 description: Validate project using appropriate tools for quality and correctness
+version: "1.0"
 trigger: manual
 tags:
   - validation
+  - analysis
   - linting
   - quality
 ---
@@ -21,9 +23,12 @@ Validate the current project using appropriate tools to ensure code quality, cor
 | `pyproject.toml` / `requirements.txt` | Python | 3 |
 | `package.json` + `tsconfig.json` | TypeScript | 4 |
 | `package.json` (no tsconfig) | Node.js | 5 |
-| `*.sh` | Bash | 6 |
-| `Dockerfile` | Docker | 7 |
-| `Chart.yaml` | Helm | 8 |
+| `Cargo.toml` | Rust | 6 |
+| `pom.xml` / `build.gradle` | Java | 7 |
+| `*.csproj` / `*.sln` | C# / .NET | 8 |
+| `*.sh` | Bash | 9 |
+| `Dockerfile` | Docker | 10 |
+| `Chart.yaml` | Helm | 11 |
 
 **Multi-language projects**: Run validation for ALL detected types, in priority order.
 
@@ -39,7 +44,7 @@ tflint --recursive          # If .tflint.hcl exists
 
 ### Go
 ```bash
-go fmt ./...
+gofmt -l .                      # List unformatted files (recursive)
 go vet ./...
 golangci-lint run           # Requires .golangci.yml
 go test -race ./...
@@ -60,10 +65,31 @@ npm run lint                # Or: npx eslint .
 npm test
 ```
 
+### Rust
+```bash
+cargo fmt --check
+cargo clippy -- -D warnings
+cargo test
+```
+
+### Java (Maven)
+```bash
+mvn spotless:check           # Or: mvn fmt:check
+mvn compile
+mvn test
+```
+
+### C# / .NET
+```bash
+dotnet format --verify-no-changes
+dotnet build --no-restore
+dotnet test --no-build
+```
+
 ### Bash
 ```bash
-shfmt -d *.sh               # Format check
-shellcheck *.sh
+shfmt -d .                  # Format check (recursive)
+find . -name '*.sh' -exec shellcheck {} +
 ```
 
 ### Docker
@@ -78,12 +104,12 @@ helm lint ./chart
 helm template ./chart > /dev/null
 ```
 
-## Execution Flow
+## Instructions
 
 1. **Detect** project type(s) based on marker files
-2. **Verify prerequisites** - Check required tools are installed
+2. **Verify** prerequisites — check required tools are installed
 3. **Execute** validation commands in order
-4. **STOP immediately** if any command fails (exit code != 0)
+4. **Stop immediately** if any command fails (exit code != 0)
 5. **Report** results with actionable details
 
 ## Report Format
@@ -142,6 +168,9 @@ Ensure these tools are installed before running validation:
 | Go | `go`, `golangci-lint` |
 | Python | `python`, `ruff`, `mypy`, `pytest` |
 | Node/TS | `node`, `npm`, `tsc` |
+| Rust | `cargo`, `clippy`, `rustfmt` |
+| Java | `mvn` or `gradle`, `spotless` |
+| C# / .NET | `dotnet` |
 | Bash | `shfmt`, `shellcheck` |
 | Docker | `hadolint`, `docker` or `trivy` |
 | Helm | `helm`, `kubeval` |

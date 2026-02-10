@@ -115,11 +115,9 @@ docker run --rm app:local echo "Container starts successfully"
 # Tag with version
 VERSION=$(git describe --tags --always)
 docker tag app:local registry.example.com/app:${VERSION}
-docker tag app:local registry.example.com/app:latest
 
 # Push (requires authentication)
 docker push registry.example.com/app:${VERSION}
-docker push registry.example.com/app:latest
 ```
 
 ## Cleanup

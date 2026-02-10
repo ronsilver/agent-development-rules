@@ -181,7 +181,7 @@ Add to `.git/hooks/pre-push`:
 
 ```bash
 #!/bin/bash
-set -e
+set -euo pipefail
 
 echo "Running pre-push checks..."
 

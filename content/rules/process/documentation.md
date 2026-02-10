@@ -25,7 +25,7 @@ globs: ["README.md", "CHANGELOG.md", "docs/**"]
 
 Every project must have a README with these sections:
 
-```markdown
+~~~markdown
 # Project Name
 
 Brief description (1-2 sentences).
@@ -77,7 +77,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md).
 ## License
 
 MIT
-```
+~~~
 
 ## CHANGELOG - MANDATORY for Libraries/APIs
 
@@ -101,7 +101,7 @@ Follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) + [Semantic Vers
 - Memory leak in connection pool (#124)
 
 ### Security
-- Updated dependencies to fix CVE-2024-1234
+- Updated dependencies to patch known vulnerability
 
 ## [2.0.0] - 2024-01-01
 ### Changed
@@ -249,7 +249,7 @@ async function processOrder(order: Order, user: User): Promise<OrderResult> {
 
 Use Mermaid for architecture diagrams (renders in GitHub):
 
-```markdown
+~~~markdown
 ```mermaid
 graph LR
     A[Client] --> B[API Gateway]
@@ -258,7 +258,7 @@ graph LR
     D --> E[(PostgreSQL)]
     D --> F[Payment Service]
 ```
-```
+~~~
 
 ## Documentation Checklist
 

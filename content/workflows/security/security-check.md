@@ -152,7 +152,7 @@ grep -rE 'readOnlyRootFilesystem:\s*false' .       # Writable filesystem
 hadolint Dockerfile
 
 # Image scanning
-trivy image app:latest --severity HIGH,CRITICAL
+trivy image app:local --severity HIGH,CRITICAL
 # STOP if CRITICAL vulnerabilities
 ```
 
@@ -200,7 +200,7 @@ AWS_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 ```
 🔒 Security Scan Results
 
-Scanned: 2024-01-15 10:30:00 UTC
+Scanned: YYYY-MM-DD HH:MM:SS UTC
 Repository: myapp
 
 | Category | Critical | High | Medium | Low |

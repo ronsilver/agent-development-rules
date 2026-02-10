@@ -173,7 +173,7 @@ gh api repos/:owner/:repo/pulls/<pr-number>/reviews/<review-id>/dismiss
 ## Comment Response Examples
 
 ### Security Issue
-```markdown
+~~~markdown
 **Comment:** SQL injection vulnerability in query
 
 **Fix commit:** `fix(db): use parameterized query for user lookup`
@@ -185,7 +185,7 @@ query = f"SELECT * FROM users WHERE id = {user_id}"
 query = "SELECT * FROM users WHERE id = %s"
 cursor.execute(query, (user_id,))
 ```
-```
+~~~
 
 ### Disagreement with Evidence
 ```markdown

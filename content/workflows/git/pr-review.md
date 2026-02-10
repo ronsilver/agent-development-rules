@@ -98,7 +98,7 @@ make run       # Or: npm start
 | `praise:` | Good pattern to highlight | No |
 
 **Comment Format:**
-```markdown
+~~~markdown
 **blocking:** SQL Injection vulnerability
 
 `src/db/users.py:45`
@@ -113,7 +113,7 @@ query = f"SELECT * FROM users WHERE id = {user_id}"
 query = "SELECT * FROM users WHERE id = %s"
 cursor.execute(query, (user_id,))
 ```
-```
+~~~
 
 ### 5. Submit Review
 

@@ -1,6 +1,6 @@
 ---
 trigger: glob
-globs: ["*.py", "*.js", "*.ts", "*.go", "*.java", "*.cs", "*.rb"]
+globs: ["*.py", "*.js", "*.ts", "*.go", "*.java", "*.cs", "*.rb", "*.rs"]
 ---
 
 # SOLID Principles - Best Practices

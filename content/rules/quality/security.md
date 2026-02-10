@@ -104,7 +104,7 @@ def add_security_headers(response):
 # ❌ Vulnerable
 uses: actions/checkout@v4
 
-# ✅ Secure - Pinned to commit SHA
+# ✅ Secure - Pinned to commit SHA (v4.1.1)
 uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
 ```
 
@@ -231,13 +231,7 @@ response.set_cookie(
 
 **Principle: Verify integrity of all software and data**
 
-```yaml
-# ❌ Vulnerable - Unsigned pipeline actions
-uses: actions/checkout@v4
-
-# ✅ Secure - Pinned by SHA (see A03)
-uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
-```
+> **Pin GitHub Actions by SHA** — see **A03 § Supply Chain Failures** for examples.
 
 **Best Practices:**
 - Verify checksums/signatures for downloaded artifacts and dependencies.

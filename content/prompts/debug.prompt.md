@@ -1,9 +1,11 @@
 ---
 name: Debug
-description: Systematic debugging assistant for analyzing and resolving issues
+description: Analyze and debug issues systematically to find root causes
+version: "1.0"
 trigger: manual
 tags:
   - debugging
+  - analysis
   - troubleshooting
   - problem-solving
 ---
@@ -42,13 +44,13 @@ git diff HEAD~5
 
 # Error logs
 tail -500 /var/log/app.log | grep -i -E "error|exception|fatal"
-journalctl -u myservice --since "1 hour ago"
+journalctl -u myservice --since "1 hour ago"  # Linux
+log show --predicate 'process == "myservice"' --last 1h  # macOS
 
 # System state
 ps aux | grep <process>
-netstat -tlnp | grep <port>
+lsof -i :<port>                 # macOS (or: ss -tlnp on Linux)
 df -h                           # Disk space
-free -m                         # Memory
 
 # Application metrics
 curl localhost:8080/metrics     # Prometheus endpoint
@@ -95,129 +97,18 @@ git bisect reset                  # Return to original state
 4. **Check for regressions** in related functionality
 5. **Add test** to prevent recurrence
 
-## Common Bug Patterns
+## Common Bug Patterns (Quick Reference)
 
-### 1. Off-by-One Errors
+| Pattern | Detection | Fix |
+|---------|-----------|-----|
+| **Off-by-one** | Boundary failures, missing first/last item | Check `<` vs `<=` bounds, use `enumerate()` for indexed access |
+| **Null/undefined** | `NullPointerException`, `TypeError` | Optional chaining (`?.`), guard clauses |
+| **Race condition** | Intermittent failures, `go test -race` | Mutex, atomic operations, channels |
+| **Resource leak** | Memory/connection increase, "too many open files" | Context managers, `defer`, `finally` |
+| **Error swallowing** | Unexpected behavior without errors | Handle specific exceptions, propagate unknown |
+| **Type coercion** | Wrong calculations, string concatenation | Explicit conversion + validation |
 
-```python
-# ❌ Bug: Skips last element
-for i in range(len(items) - 1):
-    process(items[i])
-
-# ✅ Fixed
-for i in range(len(items)):
-    process(items[i])
-
-# ✅ Better: Avoid index entirely
-for item in items:
-    process(item)
-```
-
-**Detection**: Boundary failures, missing first/last item
-
-### 2. Null/Undefined References
-
-```javascript
-// ❌ Bug: Crashes if user is null
-const name = user.profile.name;
-
-// ✅ Fixed: Optional chaining
-const name = user?.profile?.name ?? 'Unknown';
-
-// ✅ Fixed: Early return
-if (!user?.profile) {
-    return 'Unknown';
-}
-return user.profile.name;
-```
-
-**Detection**: `NullPointerException`, `TypeError: Cannot read property`
-
-### 3. Race Conditions
-
-```go
-// ❌ Bug: Data race on counter
-var counter int
-for i := 0; i < 1000; i++ {
-    go func() { counter++ }()
-}
-
-// ✅ Fixed: Atomic operation
-var counter int64
-for i := 0; i < 1000; i++ {
-    go func() { atomic.AddInt64(&counter, 1) }()
-}
-
-// ✅ Fixed: Mutex
-var mu sync.Mutex
-var counter int
-for i := 0; i < 1000; i++ {
-    go func() {
-        mu.Lock()
-        counter++
-        mu.Unlock()
-    }()
-}
-```
-
-**Detection**: Intermittent failures, `go test -race`, different results each run
-
-### 4. Resource Leaks
-
-```python
-# ❌ Bug: File never closed
-def read_config(path):
-    f = open(path)
-    return json.load(f)
-
-# ✅ Fixed: Context manager
-def read_config(path):
-    with open(path) as f:
-        return json.load(f)
-```
-
-**Detection**: Gradual memory/connection increase, "too many open files"
-
-### 5. Error Swallowing
-
-```python
-# ❌ Bug: Silently ignores errors
-try:
-    result = risky_operation()
-except Exception:
-    pass  # Silent failure!
-
-# ✅ Fixed: Handle or propagate
-try:
-    result = risky_operation()
-except SpecificError as e:
-    logger.warning(f"Operation failed: {e}")
-    result = default_value
-except Exception:
-    logger.exception("Unexpected error")
-    raise
-```
-
-**Detection**: Unexpected behavior without errors, missing data
-
-### 6. Type Coercion Bugs
-
-```javascript
-// ❌ Bug: "2" + 2 = "22"
-const total = userInput + 2;
-
-// ✅ Fixed: Explicit conversion
-const total = parseInt(userInput, 10) + 2;
-
-// ✅ Better: Validate first
-const num = parseInt(userInput, 10);
-if (isNaN(num)) throw new Error('Invalid number');
-const total = num + 2;
-```
-
-**Detection**: Wrong calculations, string concatenation instead of math
-
-## Debugging Tools by Language
+## Debugging Tools (Quick Reference)
 
 | Language | Debugger | Profiler | Logger |
 |----------|----------|----------|--------|
@@ -226,29 +117,6 @@ const total = num + 2;
 | **Node.js** | `node --inspect` | `clinic`, `0x` | `pino`, `winston` |
 | **Java** | IDE debugger | `async-profiler` | `slf4j` |
 | **Rust** | `rust-gdb`, `lldb` | `perf`, `flamegraph` | `tracing` |
-
-### Useful Debugging Commands
-
-```bash
-# Python - Interactive debugger
-python -m pdb script.py
-# In code: import pdb; pdb.set_trace()
-
-# Node.js - Chrome DevTools
-node --inspect-brk app.js
-# Open chrome://inspect
-
-# Go - Delve
-dlv debug ./cmd/app
-# (dlv) break main.go:42
-# (dlv) continue
-# (dlv) print variableName
-
-# cURL - API debugging
-curl -v -X POST http://localhost:8080/api \
-  -H "Content-Type: application/json" \
-  -d '{"key": "value"}'
-```
 
 ## Logging Best Practices
 
@@ -286,7 +154,7 @@ def process_order(order_id: str) -> Result:
 
 ## Report Format
 
-```markdown
+~~~markdown
 ## Bug Report
 
 **Issue:** Users receiving duplicate emails on signup
@@ -338,7 +206,7 @@ def signup(email, idempotency_key):
 **Prevention:**
 - Added idempotency middleware for all POST endpoints
 - Updated frontend to include idempotency keys
-```
+~~~
 
 ## Anti-Patterns
 
@@ -350,3 +218,13 @@ def signup(email, idempotency_key):
 | Remove "unnecessary" code | Understand why it exists first |
 | Debug in production | Reproduce locally if possible |
 | Ignore intermittent bugs | They're often the worst |
+
+## Instructions
+
+1. **Reproduce** the issue — confirm expected vs actual behavior
+2. **Gather** logs, metrics, and recent changes as evidence
+3. **Hypothesize** possible causes ranked by likelihood
+4. **Isolate** using binary search, minimal repro, or strategic logging
+5. **Fix** one thing at a time, run tests after each change
+6. **Verify** the fix resolves the issue without regressions
+7. **Document** root cause, fix, and prevention in report format above

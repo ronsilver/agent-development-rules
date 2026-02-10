@@ -1,6 +1,6 @@
 ---
 trigger: glob
-globs: ["*_test.go", "*_test.py", "*.test.ts", "test_*.py", "conftest.py"]
+globs: ["*_test.go", "*_test.py", "*.test.ts", "*.test.js", "*.test.tsx", "*.spec.ts", "*.spec.js", "*.spec.tsx", "test_*.py", "conftest.py"]
 ---
 
 # Testing Best Practices
@@ -61,7 +61,7 @@ def test_transfer_sufficient_balance_succeeds():
     result = service.transfer(source, target, amount=50)
 
     # Assert - Verify the outcome
-    assert result.success is True
+    assert result.success
     assert source.balance == 50
     assert target.balance == 50
 ```

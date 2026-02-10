@@ -1,11 +1,12 @@
 ---
 name: Review
 description: Review code for bugs, security vulnerabilities, and performance issues
+version: "1.0"
 trigger: manual
 tags:
   - code-review
+  - analysis
   - quality
-  - security
 ---
 
 # Review
@@ -28,7 +29,7 @@ Review the selected code or recent changes to identify issues. Focus on **impact
 | Issue | Example | Detection |
 |-------|---------|-----------|
 | Null/undefined | `user.name` without null check | Missing optional chaining or guards |
-| Race conditions | Shared mutable state | `go vet -race`, async without locks |
+| Race conditions | Shared mutable state | `go test -race`, async without locks |
 | Off-by-one | `i <= len` instead of `i < len` | Loop boundaries, array access |
 | Resource leaks | Unclosed connections/files | Missing `defer`, `finally`, `using` |
 | Error swallowing | `except: pass`, `_ = err` | Empty catch blocks, ignored returns |
@@ -47,102 +48,25 @@ def read_file(path):
 
 ### 2. Security (Priority: CRITICAL)
 
-| Vulnerability | CWE | Detection Pattern |
-|--------------|-----|-------------------|
-| Hardcoded secrets | CWE-798 | `password=`, `api_key=`, `token=` literals |
-| SQL Injection | CWE-89 | String concatenation in queries |
-| XSS | CWE-79 | Unescaped user input in HTML |
-| Path Traversal | CWE-22 | User input in file paths without validation |
-| Command Injection | CWE-78 | `shell=True`, backticks, `eval()` |
-| SSRF | CWE-918 | User-controlled URLs without allowlist |
+> For in-depth security analysis, use the **Security** prompt.
 
-```go
-// ❌ SQL Injection
-query := "SELECT * FROM users WHERE id = " + userInput
-
-// ✅ Parameterized
-query := "SELECT * FROM users WHERE id = $1"
-db.Query(query, userInput)
-```
+During review, flag these on sight:
+- Hardcoded secrets (API keys, passwords, tokens as literals)
+- String concatenation in SQL/commands (injection risk)
+- Unescaped user input in HTML/templates (XSS)
+- User-controlled file paths or URLs without validation
 
 ### 3. Performance (Priority: MEDIUM)
 
-| Anti-Pattern | Impact | Solution |
-|-------------|--------|----------|
-| N+1 queries | O(n) DB calls | Eager loading, JOINs, batch queries |
-| O(n²) loops | Slow at scale | Use maps/sets for lookups |
-| Sync blocking | Thread starvation | Async I/O, worker pools |
-| Missing indexes | Full table scans | Add indexes on WHERE/JOIN columns |
-| Memory bloat | OOM risk | Streaming, pagination, generators |
+> For detailed performance analysis, use the **Optimize** prompt.
 
-```python
-# ❌ N+1 Query
-for user in users:
-    orders = Order.query.filter_by(user_id=user.id).all()
-
-# ✅ Eager Load
-users = User.query.options(joinedload(User.orders)).all()
-```
+During review, flag: N+1 queries, O(n²) loops, missing indexes, sync blocking on async paths, unbounded memory growth.
 
 ### 4. Maintainability (Priority: LOW)
 
-| Code Smell | Threshold | Action |
-|-----------|-----------|--------|
-| Long function | >50 lines | Extract sub-functions |
-| Deep nesting | >3 levels | Early returns, extract logic |
-| Magic numbers | Any literal | Named constants |
-| Code duplication | >10 lines repeated | Extract to function |
-| Poor naming | Unclear intent | Rename with domain terms |
+> For detailed refactoring guidance, use the **Refactor** prompt.
 
-## Review Limits
-
-- **Maximum issues to report**: 10 (prioritize by severity)
-- **Focus on**: Issues that affect correctness, security, or significant performance
-- **Skip**: Pure style preferences already covered by linters
-
-## Report Format
-
-```markdown
-## 🔴 [CRITICAL] SQL Injection Vulnerability
-
-**File:** `src/db/users.py:45`
-**Category:** Security
-**CWE:** CWE-89
-
-**Problem:**
-User input is concatenated directly into SQL query, allowing arbitrary SQL execution.
-
-**Current Code:**
-```python
-query = f"SELECT * FROM users WHERE email = '{email}'"
-```
-
-**Suggested Fix:**
-```python
-query = "SELECT * FROM users WHERE email = %s"
-cursor.execute(query, (email,))
-```
-
-**Impact:** An attacker could extract or modify all database records.
-```
-
-## Severity Levels
-
-| Level | Icon | Criteria | Action |
-|-------|------|----------|--------|
-| CRITICAL | 🔴 | Security vuln, data loss, crash | **Block merge** |
-| WARNING | 🟠 | Performance, tech debt, bugs | Should fix before merge |
-| INFO | 🟡 | Style, suggestions, nitpicks | Optional improvement |
-
-## Review Checklist
-
-Before completing review, verify:
-
-- [ ] All **CRITICAL** issues have suggested fixes
-- [ ] Security issues reference CWE when applicable
-- [ ] Performance issues include complexity analysis (O notation)
-- [ ] No false positives from linter-covered rules
-- [ ] Praise good patterns when encountered (brief)
+During review, flag: functions >50 lines, nesting >3 levels, magic numbers, duplicated blocks >10 lines, unclear naming.
 
 ### 5. AI/LLM Code (Priority: MEDIUM)
 
@@ -170,3 +94,62 @@ result = llm.complete(prompt)
 if not validate_output_schema(result):
     raise ValueError("Invalid AI response format")
 ```
+
+## Review Limits
+
+- **Maximum issues to report**: 10 (prioritize by severity)
+- **Focus on**: Issues that affect correctness, security, or significant performance
+- **Skip**: Pure style preferences already covered by linters
+
+## Report Format
+
+~~~markdown
+## 🔴 [CRITICAL] SQL Injection Vulnerability
+
+**File:** `src/db/users.py:45`
+**Category:** Security
+**CWE:** CWE-89
+
+**Problem:**
+User input is concatenated directly into SQL query, allowing arbitrary SQL execution.
+
+**Current Code:**
+```python
+query = f"SELECT * FROM users WHERE email = '{email}'"
+```
+
+**Suggested Fix:**
+```python
+query = "SELECT * FROM users WHERE email = %s"
+cursor.execute(query, (email,))
+```
+
+**Impact:** An attacker could extract or modify all database records.
+~~~
+
+## Severity Levels
+
+| Level | Icon | Criteria | Action |
+|-------|------|----------|--------|
+| CRITICAL | 🔴 | Security vuln, data loss, crash | **Block merge** |
+| WARNING | 🟠 | Performance, tech debt, bugs | Should fix before merge |
+| INFO | 🟡 | Style, suggestions, nitpicks | Optional improvement |
+
+## Review Checklist
+
+Before completing review, verify:
+
+- [ ] All **CRITICAL** issues have suggested fixes
+- [ ] Security issues reference CWE when applicable
+- [ ] Performance issues include complexity analysis (O notation)
+- [ ] No false positives from linter-covered rules
+- [ ] Praise good patterns when encountered (brief)
+
+## Instructions
+
+1. **Determine scope** — selected code, git diff, full file, or PR
+2. **Scan** for CRITICAL issues first (bugs, security)
+3. **Analyze** performance and maintainability concerns
+4. **Prioritize** by severity — report max 10 issues
+5. **Provide** actionable fix for each CRITICAL/WARNING issue
+6. **Skip** style issues already covered by linters

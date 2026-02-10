@@ -18,7 +18,7 @@ Verify required tools are installed before running:
 | Python | `ruff`, `mypy`, `pytest` | `pip install ruff mypy pytest` |
 | Node.js | `node`, `npm` | Use nvm or official installer |
 | Docker | `hadolint` | `brew install hadolint` |
-| Helm | `helm`, `kubeval` | `brew install helm kubeval` |
+| Helm | `helm`, `kubeconform` | `brew install helm kubeconform` |
 
 ## Detection
 

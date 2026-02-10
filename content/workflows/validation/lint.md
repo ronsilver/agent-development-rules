@@ -7,6 +7,8 @@ description: Run linters with comprehensive checks
 
 Executes linting and formatting checks for all supported project types.
 
+> For full validation (lint + test), use the **validate** workflow. This workflow runs **detailed linting only**.
+
 ## By Project Type
 
 ### Terraform
@@ -34,9 +36,9 @@ tfsec .
 
 ### Go
 ```bash
-# Format check
-go fmt ./...
-# STOP if not formatted
+# Format check (gofmt -l returns unformatted files)
+gofmt -l .
+# STOP if output is non-empty (files need formatting)
 
 # Vet check
 go vet ./...
@@ -102,12 +104,12 @@ npm run lint
 
 ### Bash
 ```bash
-# Format check
-shfmt -l -d *.sh
+# Format check (recursive)
+shfmt -d .
 # STOP if not formatted
 
-# Linting
-shellcheck *.sh
+# Linting (recursive)
+find . -name '*.sh' -exec shellcheck {} +
 # STOP if issues found
 ```
 
@@ -130,8 +132,8 @@ docker scout quickview .
 
 ### Kubernetes / Helm
 ```bash
-# YAML validation
-kubeval *.yaml
+# YAML validation (kubeconform replaces deprecated kubeval)
+kubeconform -strict -summary *.yaml
 # STOP if invalid
 
 # Best practices
@@ -143,7 +145,7 @@ helm lint ./chart
 # STOP if errors found
 ```
 
-**Expected tools**: `kubeval`, `datree`, `helm` (if applicable)
+**Expected tools**: `kubeconform`, `datree`, `helm` (if applicable)
 
 ## Execution Strategy
 
@@ -182,24 +184,22 @@ on: [push, pull_request]
 
 jobs:
   lint-go:
-    if: contains(github.event.head_commit.modified, 'go')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/setup-go@v5 # TODO: pin to SHA
         with:
           go-version: '1.23'
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@v4 # TODO: pin to SHA
         with:
           version: v2.1.2
 
   lint-python:
-    if: contains(github.event.head_commit.modified, 'py')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/setup-python@v5 # TODO: pin to SHA
         with:
           python-version: '3.11'
       - name: Install tools

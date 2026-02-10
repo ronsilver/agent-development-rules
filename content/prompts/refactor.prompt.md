@@ -1,6 +1,7 @@
 ---
 name: Refactor
 description: Refactor code while maintaining existing behavior
+version: "1.0"
 trigger: manual
 tags:
   - refactoring
@@ -236,7 +237,7 @@ For each refactoring step:
 
 ## Report Format
 
-```markdown
+~~~markdown
 ## Refactoring Summary
 
 **Target:** `src/services/order_service.py`
@@ -257,4 +258,13 @@ For each refactoring step:
 - ✅ All 47 tests pass
 - ✅ Coverage maintained at 82%
 - ✅ No public API changes
-```
+~~~
+
+## Instructions
+
+1. **Verify** tests exist and pass before starting
+2. **Identify** code smells using the thresholds above
+3. **Plan** incremental refactoring steps
+4. **Execute** one refactoring at a time, run tests after each
+5. **Measure** improvement (lines, complexity, nesting)
+6. **Document** changes using the report format above

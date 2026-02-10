@@ -40,7 +40,7 @@ Strive for **Level AA** compliance.
 
 - **Alt Text**: MANDATORY for all `<img>` tags.
     - **Decorative images**: Use `alt=""`.
-    - **Informative images**: Describe the content conciseley.
+    - **Informative images**: Describe the content concisely.
 - **Captions**: Provide captions or transcripts for all audio/video.
 
 ```html

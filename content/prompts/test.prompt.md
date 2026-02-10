@@ -1,9 +1,11 @@
 ---
 name: Test
 description: Generate comprehensive tests following Test Pyramid and AAA pattern
+version: "1.0"
 trigger: manual
 tags:
   - testing
+  - generation
   - unit-tests
   - tdd
 ---
@@ -43,12 +45,12 @@ Generate comprehensive tests for the selected code following the **Test Pyramid*
 # For a function that accepts age 0-120
 def test_age_boundaries():
     # Valid boundaries
-    assert is_valid_age(0) == True
-    assert is_valid_age(120) == True
+    assert is_valid_age(0)
+    assert is_valid_age(120)
 
     # Invalid boundaries
-    assert is_valid_age(-1) == False
-    assert is_valid_age(121) == False
+    assert not is_valid_age(-1)
+    assert not is_valid_age(121)
 ```
 
 ## Test Doubles
@@ -95,6 +97,7 @@ class FakeUserRepository:
 | Go | testing + testify | `go test ./... -v` | `go test -cover ./...` |
 | Python | pytest | `pytest -v` | `pytest --cov=src` |
 | TypeScript | vitest | `npm test` | `npm run test:coverage` |
+| Bash | bats-core | `bats tests/` | N/A |
 | Terraform | terraform test | `terraform test` | N/A |
 
 ## Test Structure
@@ -121,7 +124,7 @@ def test_transfer_sufficient_balance_succeeds():
     result = transfer(source, target, amount=50)
 
     # Assert - Verify the outcome
-    assert result.success == True
+    assert result.success
     assert source.balance == 50
     assert target.balance == 50
 ```
@@ -171,7 +174,7 @@ def test_calculate_discount(user_tier, amount, expected):
 | Shared mutable state | Flaky tests | Fresh setup per test |
 | Sleep/time delays | Slow, unreliable | Use async/await, mocks |
 | Testing private methods | Over-specification | Test through public API |
-| Multiple assertions | Unclear failures | One logical assert per test |
+| Unrelated assertions | Unclear failures | One logical concept per test (multiple asserts OK) |
 | Hardcoded test data | Hard to maintain | Use fixtures/factories |
 
 ```python

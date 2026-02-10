@@ -1,10 +1,11 @@
 ---
 name: Explain
 description: Explain selected code in a clear, educational manner
+version: "1.0"
 trigger: manual
 tags:
   - learning
-  - documentation
+  - analysis
   - onboarding
 ---
 
@@ -53,125 +54,41 @@ Step-by-step breakdown:
 - Non-obvious behavior
 - Dependencies or assumptions
 
-## Example Explanations
+## Example Explanation
 
-### Example 1: Retry Logic
+**Code:** Python retry with exponential backoff
 
-**Code:**
 ```python
-def retry_with_backoff(fn, max_attempts=3, base_delay=1):
+def retry(fn, max_attempts=3, base_delay=1):
     for attempt in range(max_attempts):
         try:
             return fn()
-        except Exception as e:
+        except Exception:
             if attempt == max_attempts - 1:
                 raise
-            delay = base_delay * (2 ** attempt) + random.uniform(0, 1)
-            time.sleep(delay)
+            time.sleep(base_delay * 2**attempt + random.random())
 ```
 
-**Explanation:**
+### Summary
+Implements retry logic with exponential backoff + jitter for unreliable operations.
 
-## Summary
-This function implements exponential backoff retry logic for unreliable operations.
+### Purpose
+Handles transient failures (network timeouts, rate limits) by retrying with increasing delays, preventing thundering herd when services recover.
 
-## Purpose
-Handles transient failures (network timeouts, rate limits) by automatically retrying with increasing delays, preventing thundering herd problems when services recover.
+### How It Works
+1. Attempts `fn()` → on success, returns immediately
+2. On failure, checks if retries remain → if final attempt, re-raises
+3. Calculates delay: `base_delay × 2^attempt + jitter` → waits, retries
 
-## How It Works
-1. **Attempts the operation** by calling `fn()`
-2. **On success**, returns the result immediately
-3. **On failure**, checks if retries remain
-4. **If final attempt**, re-raises the exception
-5. **Otherwise**, calculates delay: `base_delay × 2^attempt + jitter`
-6. **Waits** for the calculated delay, then retries
-
-## Key Concepts
+### Key Concepts
 - **Exponential backoff**: Delay doubles each attempt (1s → 2s → 4s)
-- **Jitter**: Random 0-1s added to spread retry load across clients
-- **Fail-fast on exhaustion**: Raises original exception after max attempts
+- **Jitter**: Random 0-1s spread retry load across clients
+- **Fail-fast**: Raises original exception after max attempts
 
-## Important Details
-- Time complexity: O(1) per attempt
-- Max total wait: ~7 seconds with defaults (1 + 2 + 4 + jitter)
-- Thread-blocking: Uses `time.sleep()`, not async
-
-## Potential Gotchas
-- **No exception filtering**: Retries ALL exceptions, including non-retryable ones (e.g., `ValueError`)
-- **Blocking**: Will block the thread; use `asyncio` version for async code
-- **No circuit breaker**: Continues retrying even if service is completely down
-
----
-
-### Example 2: Database Connection Pool
-
-**Code:**
-```go
-type Pool struct {
-    mu       sync.Mutex
-    conns    chan *Conn
-    factory  func() (*Conn, error)
-    maxSize  int
-}
-
-func (p *Pool) Get(ctx context.Context) (*Conn, error) {
-    select {
-    case conn := <-p.conns:
-        if conn.IsHealthy() {
-            return conn, nil
-        }
-        conn.Close()
-        return p.factory()
-    case <-ctx.Done():
-        return nil, ctx.Err()
-    default:
-        p.mu.Lock()
-        defer p.mu.Unlock()
-        if len(p.conns) < p.maxSize {
-            return p.factory()
-        }
-        select {
-        case conn := <-p.conns:
-            return conn, nil
-        case <-ctx.Done():
-            return nil, ctx.Err()
-        }
-    }
-}
-```
-
-**Explanation:**
-
-## Summary
-A thread-safe connection pool that reuses database connections and creates new ones on demand up to a maximum limit.
-
-## Purpose
-Avoids the overhead of creating new database connections for each request (connection creation is expensive: TCP handshake, TLS, authentication).
-
-## How It Works
-1. **Try to get existing connection** from buffered channel (non-blocking)
-2. **Health check**: If connection is stale, close it and create new one
-3. **Context cancellation**: Respect timeout/cancellation at any point
-4. **If no connection available**:
-   - Lock mutex to safely check pool size
-   - If under max size, create new connection
-   - Otherwise, block waiting for a connection to be returned
-
-## Key Concepts
-- **Buffered channel as pool**: `chan *Conn` acts as a thread-safe queue
-- **Select with default**: Non-blocking receive attempt
-- **Context propagation**: Allows caller to set timeouts
-- **Lazy initialization**: Connections created on demand, not upfront
-
-## Important Details
-- **Thread-safe**: Mutex protects size check, channel is inherently safe
-- **Bounded**: Never exceeds `maxSize` connections
-- **Health checks**: Validates connections before returning (handles server restarts)
-
-## Potential Gotchas
-- **Connection leak**: Caller MUST return connection via `Put()` or `defer`
-- **No idle timeout**: Connections stay open indefinitely
-- **Blocking under load**: If all connections busy and at max, callers block
+### Gotchas
+- Retries ALL exceptions (including non-retryable like `ValueError`)
+- Blocks thread with `time.sleep()` — use async version for async code
+- No circuit breaker — retries even if service is completely down
 
 ---
 

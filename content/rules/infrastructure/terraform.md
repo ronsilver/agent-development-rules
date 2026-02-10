@@ -332,7 +332,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       # Layer 1: Code Quality
       - name: TFLint
@@ -344,13 +344,13 @@ jobs:
 
       # Layer 2: Security
       - name: Checkov
-        uses: bridgecrewio/checkov-action@master
+        uses: bridgecrewio/checkov-action@master # TODO: pin to SHA
         with:
           directory: .
           framework: terraform
 
       - name: tfsec
-        uses: aquasecurity/tfsec-action@v1.0.0
+        uses: aquasecurity/tfsec-action@v1.0.0 # TODO: pin to SHA
         with:
           soft_fail: false
 ```

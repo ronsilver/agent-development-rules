@@ -60,8 +60,8 @@ function cleanup() {
 
 Before any commit or PR, you **MUST** run:
 ```bash
-shfmt -l -d *.sh        # Format check
-shellcheck *.sh          # Linting
+shfmt -d .              # Format check (recursive)
+find . -name '*.sh' -exec shellcheck {} +  # Linting (recursive)
 ```
 
 ## Formatting with shfmt

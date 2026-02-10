@@ -1,10 +1,12 @@
 ---
 name: Commit
 description: Generate commit messages following Conventional Commits specification
+version: "1.0"
 trigger: manual
 tags:
   - git
   - conventional-commits
+  - generation
 ---
 
 # Commit
@@ -46,7 +48,7 @@ Generate a commit message following the **Conventional Commits** specification.
 | Lowercase | `fix bug` | `Fix bug`, `FIX BUG` |
 | No period | `add feature` | `add feature.` |
 | Max 50 chars | Short and clear | Long rambling description |
-| Scope required | `fix(auth): ...` | `fix: ...` |
+| Scope recommended | `fix(auth): ...` | `fix: ...` (acceptable for trivial changes) |
 
 ### Body (Optional but Recommended)
 - Explain **WHAT** and **WHY**, not **HOW**
@@ -115,7 +117,7 @@ fix(auth): handle expired reset tokens
 ```
 build(deps): upgrade express from 4.18.0 to 4.19.0
 
-Security fix for CVE-2024-XXXX (request smuggling).
+Security fix for request smuggling vulnerability.
 No breaking changes in this minor version.
 ```
 
@@ -127,16 +129,6 @@ docs(api): add rate limiting section to API docs
 - Add examples of 429 responses
 - Include retry-after header usage
 ```
-
-## Analysis Process
-
-1. **Examine changes**: Run `git diff --staged` or review diff
-2. **Identify primary change**: What's the main purpose?
-3. **Determine type**: feat, fix, refactor, etc.
-4. **Find scope**: Which module/component is affected?
-5. **Write subject**: Imperative, concise, lowercase
-6. **Add body**: If change is non-trivial, explain why
-7. **Add footer**: Reference issues, note breaking changes
 
 ## Anti-Patterns
 
@@ -150,16 +142,29 @@ docs(api): add rate limiting section to API docs
 
 ## Git Hooks Integration
 
+> **Node.js projects** use husky + commitlint. For other ecosystems, use
+> [pre-commit](https://pre-commit.com/) with the `conventional-pre-commit` hook.
+
 ```bash
-# .husky/commit-msg
+# .husky/commit-msg (Node.js)
 npx --no -- commitlint --edit "$1"
 
 # commitlint.config.js
 module.exports = {
   extends: ['@commitlint/config-conventional'],
   rules: {
-    'scope-empty': [2, 'never'],
+    'scope-empty': [1, 'never'],     // Warning, not error (scope is recommended)
     'subject-case': [2, 'always', 'lower-case'],
   },
 };
 ```
+
+## Instructions
+
+1. **Examine changes**: Run `git diff --staged` or review diff
+2. **Identify primary change**: What's the main purpose?
+3. **Determine type**: feat, fix, refactor, etc.
+4. **Find scope**: Which module/component is affected?
+5. **Write subject**: Imperative, concise, lowercase
+6. **Add body**: If change is non-trivial, explain why
+7. **Add footer**: Reference issues, note breaking changes

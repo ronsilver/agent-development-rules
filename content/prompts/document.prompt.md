@@ -1,9 +1,11 @@
 ---
 name: Document
 description: Generate comprehensive documentation focusing on Why over What
+version: "1.0"
 trigger: manual
 tags:
   - documentation
+  - generation
   - readme
   - api-docs
 ---
@@ -114,7 +116,7 @@ function calculateDiscount(user: User, amount: number): number {
 
 ### 3. README Standard
 
-```markdown
+~~~markdown
 # Project Name
 
 Brief description of what this project does and why it exists.
@@ -179,146 +181,32 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 ## License
 
 MIT
-```
+~~~
 
 ### 4. ADR (Architecture Decision Record)
 
-```markdown
-# ADR-001: Use PostgreSQL for Primary Database
+Structure: **Status → Context → Decision → Consequences (Positive/Negative) → Alternatives Considered**
 
-## Status
-Accepted
-
-## Context
-We need a database for storing user data and transactions.
-Requirements: ACID compliance, JSON support, strong ecosystem.
-
-## Decision
-Use PostgreSQL 15+ as the primary database.
-
-## Consequences
-
-### Positive
-- Strong ACID guarantees
-- Excellent JSON/JSONB support
-- Wide tooling ecosystem
-- Team familiarity
-
-### Negative
-- Requires managed service or operational expertise
-- Horizontal scaling requires additional setup (Citus, read replicas)
-
-## Alternatives Considered
-
-| Option | Pros | Cons | Decision |
-|--------|------|------|----------|
-| MySQL | Familiar, fast | Weaker JSON support | Rejected |
-| MongoDB | Flexible schema | No ACID by default | Rejected |
-| CockroachDB | Distributed | Less mature | Deferred |
-```
+Key rules:
+- One decision per ADR, numbered sequentially (`ADR-001`, `ADR-002`)
+- Include alternatives considered with pros/cons table
+- Status: `Proposed`, `Accepted`, `Deprecated`, `Superseded`
 
 ### 5. API Documentation
 
-```markdown
-## POST /api/v1/users
+Structure per endpoint: **Method + Path → Authentication → Request (Headers, Body, Constraints) → Responses (Success + Error codes with examples)**
 
-Create a new user account.
-
-### Authentication
-Required: `Bearer` token with `users:write` scope
-
-### Request Headers
-| Header | Required | Description |
-|--------|----------|-------------|
-| `Authorization` | Yes | Bearer token |
-| `Content-Type` | Yes | `application/json` |
-| `X-Request-ID` | No | Correlation ID for tracing |
-
-### Request Body
-```json
-{
-  "email": "user@example.com",
-  "name": "John Doe",
-  "role": "member"
-}
-```
-
-| Field | Type | Required | Constraints |
-|-------|------|----------|-------------|
-| `email` | string | Yes | Valid email format |
-| `name` | string | Yes | 1-100 characters |
-| `role` | string | No | `member`, `admin` |
-
-### Responses
-
-#### 201 Created
-```json
-{
-  "id": "usr_abc123",
-  "email": "user@example.com",
-  "name": "John Doe",
-  "role": "member",
-  "created_at": "2024-01-15T10:30:00Z"
-}
-```
-
-#### 400 Bad Request
-```json
-{
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Invalid email format",
-    "field": "email"
-  }
-}
-```
-
-#### 409 Conflict
-```json
-{
-  "error": {
-    "code": "DUPLICATE_EMAIL",
-    "message": "User with this email already exists"
-  }
-}
-```
-```
+Key rules:
+- Include all response codes (2xx, 4xx, 5xx) with JSON examples
+- Document required vs optional fields with constraints
+- Include `X-Request-ID` for tracing correlation
 
 ### 6. CHANGELOG (Keep a Changelog)
 
-```markdown
-# Changelog
-
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [Unreleased]
-
-### Added
-- New `/api/v1/users/bulk` endpoint for batch operations
-
-### Changed
-- Improved error messages for validation failures
-
-## [1.2.0] - 2024-01-15
-
-### Added
-- User role management (#123)
-- Rate limiting on authentication endpoints (#125)
-
-### Fixed
-- Memory leak in connection pool (#124)
-
-### Security
-- Updated `lodash` to fix prototype pollution vulnerability
-
-## [1.1.0] - 2024-01-01
-
-### Added
-- Initial release with user CRUD operations
-```
+Follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) + [Semantic Versioning](https://semver.org/):
+- Sections: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`
+- Keep `[Unreleased]` section at top
+- Reference issue/PR numbers
 
 ## Documentation Tools
 

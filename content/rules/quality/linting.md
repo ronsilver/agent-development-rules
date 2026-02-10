@@ -96,7 +96,7 @@ Format → Lint → Type Check → Test → Security Scan
 
 **Config**: `.shellcheckrc`, `.editorconfig`
 
-**Runs**: `shfmt -l -d *.sh && shellcheck *.sh`
+**Runs**: `shfmt -d . && find . -name '*.sh' -exec shellcheck {} +`
 
 ### Docker
 
@@ -188,8 +188,8 @@ jobs:
       python: ${{ steps.filter.outputs.python }}
       typescript: ${{ steps.filter.outputs.typescript }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: dorny/paths-filter@v3 # TODO: pin to SHA
         id: filter
         with:
           filters: |
@@ -206,8 +206,8 @@ jobs:
     if: needs.detect-changes.outputs.go == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: golangci/golangci-lint-action@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: golangci/golangci-lint-action@v4 # TODO: pin to SHA
         with:
           version: v2.1.2
 
@@ -216,7 +216,7 @@ jobs:
     if: needs.detect-changes.outputs.python == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - run: |
           pip install ruff mypy
           ruff check .
@@ -280,105 +280,18 @@ eslint . --fix
 
 ## Common Pitfalls
 
-### ❌ Anti-patterns
+| Anti-Pattern | Problem | Solution |
+|-------------|---------|----------|
+| Disabling too many rules | Defeats the purpose | Start strict, relax selectively |
+| `eslint . \|\| true` | Ignores exit code | Fail CI on any lint error |
+| No CI enforcement | Pre-commit can be skipped | Enforce in CI pipeline |
+| Running linters separately | Wastes time | Use unified tools (`golangci-lint`, `ruff`) |
 
-1. **Disabling too many rules**: Defeats the purpose
-   ```yaml
-   # Bad
-   disable:
-     - errcheck
-     - gosec
-     - staticcheck
-   ```
-
-2. **Ignoring all warnings**: Warnings often catch real bugs
-   ```bash
-   # Bad
-   eslint . || true  # Ignores exit code
-   ```
-
-3. **No CI enforcement**: Pre-commit hooks can be skipped
-   ```bash
-   # Developers can bypass
-   git commit --no-verify
-   ```
-
-4. **Running linters separately**: Wastes time
-   ```bash
-   # Bad
-   go fmt ./...
-   go vet ./...
-   golangci-lint run
-
-   # Good
-   golangci-lint run  # Includes fmt, vet, and more
-   ```
-
-### ✅ Best Practices
+## Best Practices
 
 1. **Start strict**: Easier to relax than tighten
 2. **Automate everything**: Pre-commit + CI/CD
 3. **Fast feedback**: Local linting before push
 4. **Enforce in CI**: Make it mandatory, not optional
-5. **Update regularly**: Tools improve constantly
-
-## Tool Version Management
-
-### Keep Tools Updated
-
-```bash
-# Go
-go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-
-# Python
-pip install --upgrade ruff mypy
-
-# Node.js
-npm update -g eslint prettier
-```
-
-### Pin Versions in CI/CD
-
-```yaml
-# GitHub Actions
-- uses: golangci/golangci-lint-action@v4
-  with:
-    version: v2.1.2  # Pin specific version
-
-# Docker
-FROM golangci/golangci-lint:v2.1.2  # Pin version
-```
-
-## Measuring Impact
-
-Track these metrics to measure linting effectiveness:
-
-- **Bugs caught in linting**: vs testing/production
-- **Build time**: Linting should be < 5% of total CI time
-- **False positives**: Should be < 5% of total issues
-- **Developer satisfaction**: Survey team regularly
-
-## Resources
-
-### Documentation
-- **golangci-lint**: https://golangci-lint.run
-- **Ruff**: https://docs.astral.sh/ruff
-- **ESLint**: https://eslint.org
-- **TFLint**: https://github.com/terraform-linters/tflint
-- **Hadolint**: https://hadolint.com
-
-### Learning
-- **golangci-lint best practices**: https://golangci-lint.run/docs/usage/best-practices
-- **Ruff vs Black/Flake8**: https://docs.astral.sh/ruff/faq/
-- **ESLint flat config migration**: https://eslint.org/docs/latest/use/configure/migration-guide
-
-## Summary
-
-**The key to effective linting**:
-1. ⚡ **Fast feedback**: Pre-commit hooks
-2. 🔒 **Enforce in CI**: Make it mandatory
-3. 📊 **Measure impact**: Track bugs caught
-4. 🔄 **Keep updated**: Tools improve constantly
-5. 👥 **Team buy-in**: Explain the why, not just the what
-
-Linting is **not optional**—it's a quality gate that prevents bugs, security issues, and technical debt.
+5. **Pin versions in CI**: Ensure reproducible builds
+6. **Update regularly**: Tools improve constantly

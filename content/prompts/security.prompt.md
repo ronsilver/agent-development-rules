@@ -1,22 +1,24 @@
 ---
 name: Security
 description: Analyze code for security vulnerabilities based on OWASP and CWE
+version: "1.0"
 trigger: manual
 tags:
   - security
+  - analysis
   - owasp
   - vulnerability
 ---
 
 # Security Check
 
-Analyze code for security vulnerabilities based on **OWASP Top 10:2025** and **CWE Top 25**.
+Analyze code for security vulnerabilities based on **OWASP Top 10** and **CWE Top 25**.
 
 ## Analysis Categories
 
 ### 1. Secrets & Credentials (CWE-798)
 
-**Detection Patterns:**
+**Detection Patterns** (heuristic — use tools like `gitleaks`/`trufflehog` for accurate scanning):
 ```regex
 # API Keys & Tokens
 (?i)(api[_-]?key|apikey|secret[_-]?key|access[_-]?token)\s*[:=]\s*["'][a-zA-Z0-9_\-]{16,}["']
@@ -144,7 +146,7 @@ snyk test
 # ❌ Vulnerable to supply chain attacks
 uses: actions/checkout@v4
 
-# ✅ Pinned to specific commit
+# ✅ Pinned to specific commit (v4.1.1)
 uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
 ```
 
@@ -159,7 +161,7 @@ uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
 
 ## Report Format
 
-```markdown
+~~~markdown
 ## 🔴 [CRITICAL] SQL Injection in User Authentication
 
 **File:** `src/auth/login.py:47`
@@ -194,7 +196,7 @@ cursor.execute(query, (email,))
 **References:**
 - https://owasp.org/Top10/A03_2021-Injection/
 - https://cwe.mitre.org/data/definitions/89.html
-```
+~~~
 
 ## Security Checklist
 
@@ -207,3 +209,13 @@ cursor.execute(query, (email,))
 - [ ] Security headers configured
 - [ ] Dependencies scanned for vulnerabilities
 - [ ] GitHub Actions pinned by SHA
+
+## Instructions
+
+1. **Scan** for hardcoded secrets and credentials first
+2. **Check** all user input paths for injection vulnerabilities
+3. **Verify** authentication and session security configuration
+4. **Audit** logging for sensitive data exposure
+5. **Review** security headers and CORS configuration
+6. **Inspect** dependencies for known vulnerabilities
+7. **Report** findings using severity classification and format above

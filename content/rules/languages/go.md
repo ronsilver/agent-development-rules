@@ -128,9 +128,8 @@ issues:
 ## Testing
 
 ### Test Coverage Requirements
-- **Critical Logic**: 90% coverage
-- **Public API**: 80% coverage
-- **Overall**: 70% coverage minimum
+
+> Thresholds (90%/80%/70%) defined in **testing.md § Coverage Requirements**.
 
 ```bash
 # Run tests with coverage
@@ -259,7 +258,6 @@ func TestParallel(t *testing.T) {
     }
 
     for _, tt := range tests {
-        tt := tt // Capture range variable
         t.Run(tt.name, func(t *testing.T) {
             t.Parallel() // Run tests in parallel
             result := Process(tt.input)

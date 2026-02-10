@@ -179,7 +179,7 @@ output "bucket_id" {
 ```
 
 ### `examples/basic/README.md`
-```markdown
+~~~markdown
 # Basic Example
 
 This example creates a basic instance of the module.
@@ -191,7 +191,7 @@ terraform init
 terraform plan
 terraform apply
 ```
-```
+~~~
 
 ## 4. Module Tests (Terraform 1.6+)
 

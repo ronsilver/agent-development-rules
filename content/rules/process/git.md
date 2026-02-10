@@ -1,6 +1,6 @@
 ---
 trigger: glob
-globs: [".github/**", "*.yml", "*.yaml", ".gitignore", "*.md"]
+globs: [".github/**", ".gitignore", ".gitattributes", "CONTRIBUTING.md", "CHANGELOG.md"]
 ---
 
 # Git Best Practices

@@ -124,8 +124,6 @@ select = [
 ignore = [
     "D100",  # Missing docstring in public module
     "D104",  # Missing docstring in public package
-    "ANN101", # Missing type annotation for self
-    "ANN102", # Missing type annotation for cls
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -197,9 +195,8 @@ tests:
 ## Testing with Pytest
 
 ### Coverage Requirements
-- **Critical Logic**: 90% coverage
-- **Public API**: 80% coverage
-- **Overall**: 70% coverage minimum
+
+> Thresholds (90%/80%/70%) defined in **testing.md § Coverage Requirements**.
 
 ### Essential Pytest Plugins
 
@@ -263,20 +260,7 @@ exclude_lines = [
 
 ### Test Examples
 
-**Basic Test**:
-```python
-import pytest
-
-def test_add():
-    assert 1 + 1 == 2
-
-def test_divide():
-    assert 10 / 2 == 5
-
-def test_divide_by_zero():
-    with pytest.raises(ZeroDivisionError):
-        1 / 0
-```
+> For general patterns (AAA, naming, table-driven, anti-patterns), see **testing.md**.
 
 **Fixtures** (`conftest.py`):
 ```python
@@ -302,8 +286,6 @@ def client(db):
 
 **Parametrize** (multiple test cases):
 ```python
-import pytest
-
 @pytest.mark.parametrize("input,expected", [
     (1, 2),
     (2, 4),
@@ -314,17 +296,12 @@ def test_double(input, expected):
     assert double(input) == expected
 ```
 
-**Mocking**:
+**Mocking** (pytest-mock):
 ```python
-import pytest
-from unittest.mock import Mock
-
 def test_user_service(mocker):
-    # Mock repository
     mock_repo = mocker.Mock()
     mock_repo.get_user.return_value = {"id": 123, "name": "John"}
 
-    # Test service
     service = UserService(mock_repo)
     user = service.get_user(123)
 
@@ -332,61 +309,14 @@ def test_user_service(mocker):
     mock_repo.get_user.assert_called_once_with(123)
 ```
 
-**Async Tests**:
-```python
-import pytest
-
-@pytest.mark.asyncio
-async def test_async_function():
-    result = await fetch_data()
-    assert result is not None
-```
-
-**Markers** (categorize tests):
-```python
-import pytest
-
-@pytest.mark.slow
-def test_long_running_operation():
-    # ...
-    pass
-
-@pytest.mark.integration
-def test_database_integration(db):
-    # ...
-    pass
-```
-
 ### Running Tests
 
 ```bash
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=src --cov-report=term-missing
-
-# Run in parallel (faster)
-pytest -n auto
-
-# Run specific markers
-pytest -m "not slow"
-pytest -m integration
-
-# Run specific test file
-pytest tests/test_user.py
-
-# Run specific test
-pytest tests/test_user.py::test_create_user
-
-# Verbose output
-pytest -v
-
-# Stop on first failure
-pytest -x
-
-# Show local variables on failure
-pytest -l
+pytest                                    # Run all tests
+pytest --cov=src --cov-report=term-missing # With coverage
+pytest -n auto                             # Parallel (pytest-xdist)
+pytest -m "not slow"                       # Skip slow tests
+pytest -x -l                               # Stop on first failure, show locals
 ```
 
 ## Path Handling

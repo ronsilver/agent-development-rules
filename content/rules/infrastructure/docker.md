@@ -220,7 +220,7 @@ Always set in production:
 # docker-compose.yml
 services:
   app:
-    image: myapp:latest
+    image: myapp:1.2.3
     deploy:
       resources:
         limits:

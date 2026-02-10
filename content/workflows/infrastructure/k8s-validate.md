@@ -13,8 +13,7 @@ Validate Kubernetes manifests for correctness, security, and best practices.
 |------|---------|---------|
 | `kubectl` | K8s CLI | `brew install kubernetes-cli` |
 | `helm` | Helm charts | `brew install helm` |
-| `kubeval` | Schema validation | `brew install kubeval` |
-| `kubeconform` | Schema validation (faster) | `brew install kubeconform` |
+| `kubeconform` | Schema validation | `brew install kubeconform` |
 | `kube-linter` | Best practices | `brew install kube-linter` |
 | `pluto` | Deprecated API detection | `brew install pluto` |
 
@@ -24,9 +23,9 @@ Validate Kubernetes manifests for correctness, security, and best practices.
 
 | Marker File | Type | Tool Chain |
 |-------------|------|------------|
-| `Chart.yaml` | Helm | helm lint → helm template → kubeval |
-| `kustomization.yaml` | Kustomize | kubectl kustomize → kubeval |
-| `*.yaml` with `kind:` | Plain YAML | kubeval → kubectl dry-run |
+| `Chart.yaml` | Helm | helm lint → helm template → kubeconform |
+| `kustomization.yaml` | Kustomize | kubectl kustomize → kubeconform |
+| `*.yaml` with `kind:` | Plain YAML | kubeconform → kubectl dry-run |
 
 ### 2. Schema Validation
 
@@ -56,7 +55,6 @@ kubeconform -strict -summary /tmp/rendered.yaml
 ```bash
 # // turbo
 kubeconform -strict -summary *.yaml
-# Or legacy: kubeval *.yaml
 # STOP if schema validation fails
 ```
 

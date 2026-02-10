@@ -1,6 +1,6 @@
 ---
 trigger: glob
-globs: ["*.yaml", "*.yml", "**/k8s/**", "Chart.yaml", "values.yaml"]
+globs: ["**/k8s/**/*.yaml", "**/k8s/**/*.yml", "**/manifests/**/*.yaml", "Chart.yaml", "values.yaml", "**/templates/**/*.yaml"]
 ---
 
 # Kubernetes Best Practices

@@ -77,6 +77,7 @@ prompts:
     - commit.prompt.md
     - explain.prompt.md
     - debug.prompt.md
+    - optimize.prompt.md
 
 # =============================================================================
 # Configuración por Agente
@@ -134,6 +135,7 @@ agents:
         path: "${HOME}/.config/gh-copilot/instructions.md"
         format: merged
         strip_frontmatter: true
+        source_type: "rules"
         header: |
           # GitHub Copilot CLI - Global Instructions
 
@@ -251,6 +253,7 @@ agents:
         path: "${HOME}/.claude/CLAUDE.md"
         format: merged
         strip_frontmatter: true
+        source_type: "rules"
         header: |
           # Claude Code - Global Instructions
 
@@ -273,6 +276,7 @@ agents:
         path: "${HOME}/.codex/AGENTS.md"
         format: merged
         strip_frontmatter: true
+        source_type: "rules"
         header: |
           # Codex CLI - Global Instructions
 
@@ -295,6 +299,7 @@ agents:
         path: "${HOME}/.gemini/GEMINI.md"
         format: merged
         strip_frontmatter: true
+        source_type: "rules"
         header: |
           # Gemini CLI - Global Instructions
 
@@ -315,9 +320,10 @@ agents:
         format: individual
         strip_frontmatter: false
       instructions:
-        path: "${HOME}/.gemini/GEMINI.md"
+        path: "${HOME}/.gemini/GEMINI-antigravity.md"
         format: merged
         strip_frontmatter: true
+        source_type: "rules"
         header: |
           # Google Antigravity - Global Instructions
 
@@ -345,6 +351,7 @@ agents:
         path: "${HOME}/.opencode/AGENTS.md"
         format: merged
         strip_frontmatter: true
+        source_type: "rules"
         header: |
           # OpenCode - Global Instructions
 
@@ -356,10 +363,10 @@ agents:
     description: "Copiar reglas a proyecto local"
     targets:
       rules:
-        path: ".windsurf/rules"
+        path: "${REPO_ROOT}/.windsurf/rules"
         format: individual
         strip_frontmatter: false
       workflows:
-        path: ".windsurf/workflows"
+        path: "${REPO_ROOT}/.windsurf/workflows"
         format: individual
         strip_frontmatter: false

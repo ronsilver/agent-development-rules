@@ -22,13 +22,14 @@ MANIFEST_FILE="${REPO_ROOT}/manifest.yaml"
 
 # Cargar funciones comunes
 source "${SCRIPT_DIR}/lib/common.sh"
+source "${SCRIPT_DIR}/lib/sync.sh"
 
 # Variables globales
 DRY_RUN=false
 SPECIFIC_AGENT=""
 CREATE_BACKUP=false
 VALIDATE_FIRST=false
-TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+TIMESTAMP=$(get_timestamp)
 CONTENT_DIR=""
 
 # =============================================================================
@@ -36,17 +37,7 @@ CONTENT_DIR=""
 # =============================================================================
 
 check_dependencies() {
-    local missing=()
-
-    if ! command -v yq &> /dev/null; then
-        missing+=("yq")
-    fi
-
-    if [[ ${#missing[@]} -gt 0 ]]; then
-        log_error "Dependencias faltantes: ${missing[*]}"
-        log_info "Instalar con: brew install ${missing[*]}"
-        exit 1
-    fi
+    check_dependency "yq" "brew install yq" || exit 1
 }
 
 # Verificar si un agente está habilitado
@@ -72,9 +63,8 @@ is_agent_installed() {
     paths=$(yq "${detect_config}.paths[]" "${MANIFEST_FILE}" 2>/dev/null || echo "")
     if [[ -n "${paths}" ]]; then
         while IFS= read -r path; do
-            # Expandir variables de entorno
             local expanded_path
-            expanded_path=$(eval echo "${path}")
+            expanded_path=$(expand_path "${path}")
             # Soportar globs
             if compgen -G "${expanded_path}" > /dev/null 2>&1; then
                 log_debug "Detectado ${agent} via path: ${expanded_path}"
@@ -83,13 +73,16 @@ is_agent_installed() {
         done <<< "${paths}"
     fi
 
-    # Verificar comandos (cualquiera que funcione)
+    # Verificar comandos (solo el binario principal, sin eval)
     local commands
     commands=$(yq "${detect_config}.commands[]" "${MANIFEST_FILE}" 2>/dev/null || echo "")
     if [[ -n "${commands}" ]]; then
         while IFS= read -r cmd; do
-            if [[ -n "${cmd}" ]] && eval "${cmd}" &>/dev/null; then
-                log_debug "Detectado ${agent} via comando: ${cmd}"
+            [[ -z "${cmd}" ]] && continue
+            # Extraer solo el binario principal para verificar existencia
+            local binary="${cmd%% *}"
+            if command -v "${binary}" &>/dev/null; then
+                log_debug "Detectado ${agent} via comando: ${binary}"
                 return 0
             fi
         done <<< "${commands}"
@@ -97,136 +90,6 @@ is_agent_installed() {
 
     # Si hay configuración pero no se detectó nada
     return 1
-}
-
-# Obtener lista de archivos para un tipo (rules, workflows, prompts)
-get_source_files() {
-    local type="$1"
-    local source_dir
-    source_dir=$(yq ".${type}.source_dir" "${MANIFEST_FILE}")
-
-    yq ".${type}.files[]" "${MANIFEST_FILE}" | while read -r file; do
-        local full_path="${CONTENT_DIR}/${source_dir}/${file}"
-        if [[ -f "${full_path}" ]]; then
-            echo "${full_path}"
-        else
-            log_warn "Archivo no encontrado: ${full_path}"
-        fi
-    done
-}
-
-# =============================================================================
-# Función principal de sincronización
-# =============================================================================
-
-sync_merged() {
-    local agent="$1"
-    local target_type="$2"  # rules, workflows, prompts
-    local source_type="$3"  # tipo en manifest (rules, workflows, prompts)
-
-    local target_config=".agents.${agent}.targets.${target_type}"
-
-    # Verificar si existe la configuración
-    if [[ $(yq "${target_config}" "${MANIFEST_FILE}") == "null" ]]; then
-        log_debug "No hay configuración de ${target_type} para ${agent}"
-        return 0
-    fi
-
-    local format
-    format=$(yq "${target_config}.format // \"merged\"" "${MANIFEST_FILE}")
-
-    local strip_frontmatter
-    strip_frontmatter=$(yq "${target_config}.strip_frontmatter // false" "${MANIFEST_FILE}")
-
-    local header
-    header=$(yq "${target_config}.header // \"\"" "${MANIFEST_FILE}" | sed "s/{{timestamp}}/${TIMESTAMP}/g")
-
-    # Obtener paths de destino
-    local paths=()
-
-    # Path único
-    local single_path
-    single_path=$(yq "${target_config}.path // \"\"" "${MANIFEST_FILE}")
-    if [[ -n "${single_path}" && "${single_path}" != "null" ]]; then
-        paths+=("$(expand_path "${single_path}")")
-    fi
-
-    # Múltiples paths
-    local multi_paths
-    multi_paths=$(yq "${target_config}.paths[]?" "${MANIFEST_FILE}" 2>/dev/null || true)
-    if [[ -n "${multi_paths}" ]]; then
-        while IFS= read -r p; do
-            paths+=("$(expand_path "${p}")")
-        done <<< "${multi_paths}"
-    fi
-
-    # Glob paths
-    local glob_paths
-    glob_paths=$(yq "${target_config}.glob_paths[]?" "${MANIFEST_FILE}" 2>/dev/null || true)
-    if [[ -n "${glob_paths}" ]]; then
-        while IFS= read -r pattern; do
-            local expanded_pattern
-            expanded_pattern=$(expand_path "${pattern}")
-            shopt -s nullglob
-            for expanded_dir in ${expanded_pattern}; do
-                paths+=("${expanded_dir}")
-            done
-            shopt -u nullglob
-        done <<< "${glob_paths}"
-    fi
-
-    if [[ ${#paths[@]} -eq 0 ]]; then
-        log_warn "No hay paths configurados para ${agent}/${target_type}"
-        return 0
-    fi
-
-    # Obtener nombre de archivo de salida
-    local output_filename
-    output_filename=$(yq "${target_config}.output_filename // \"\"" "${MANIFEST_FILE}")
-
-    # Generar contenido
-    local content=""
-
-    # Agregar header si existe
-    if [[ -n "${header}" && "${header}" != "null" ]]; then
-        content="${header}"
-    fi
-
-    # Agregar contenido de archivos
-    while IFS= read -r source_file; do
-        [[ -z "${source_file}" ]] && continue
-
-        if [[ "${strip_frontmatter}" == "true" ]]; then
-            content+=$(extract_content "${source_file}")
-        else
-            content+=$(cat "${source_file}")
-        fi
-        content+=$'\n\n---\n\n'
-    done < <(get_source_files "${source_type}")
-
-    # Escribir a cada destino
-    for target_path in "${paths[@]}"; do
-        local final_path="${target_path}"
-
-        # Si es un directorio, usar output_filename
-        if [[ -d "${target_path}" || "${target_path}" != *".md" ]]; then
-            mkdir -p "${target_path}"
-            if [[ -n "${output_filename}" && "${output_filename}" != "null" ]]; then
-                final_path="${target_path}/${output_filename}"
-            else
-                final_path="${target_path}/rules.md"
-            fi
-        else
-            mkdir -p "$(dirname "${target_path}")"
-        fi
-
-        if [[ "${DRY_RUN}" == "true" ]]; then
-            log_info "[DRY-RUN] Escribiría a: ${final_path}"
-        else
-            echo "${content}" > "${final_path}"
-            log_info "  → ${final_path}"
-        fi
-    done
 }
 
 # =============================================================================
@@ -252,21 +115,22 @@ sync_agent() {
 
     log_section "Sincronizando: ${description}"
 
-    # Sincronizar rules
-    log_info "Sincronizando rules..."
-    sync_merged "${agent}" "rules" "rules"
+    # Descubrir target types desde el manifest
+    local target_types
+    target_types=$(yq ".agents.${agent}.targets | keys | .[]" "${MANIFEST_FILE}" 2>/dev/null || echo "")
 
-    # Sincronizar workflows
-    log_info "Sincronizando workflows..."
-    sync_merged "${agent}" "workflows" "workflows"
+    if [[ -z "${target_types}" ]]; then
+        log_warn "No hay targets configurados para ${agent}"
+        return 0
+    fi
 
-    # Sincronizar prompts
-    log_info "Sincronizando prompts..."
-    sync_merged "${agent}" "prompts" "prompts"
-
-    # Sincronizar instructions (para agentes que lo soporten)
-    log_info "Sincronizando instructions..."
-    sync_merged "${agent}" "instructions" "rules"
+    while IFS= read -r target_type; do
+        [[ -z "${target_type}" ]] && continue
+        local source_type
+        source_type=$(yq ".agents.${agent}.targets.${target_type}.source_type // \"${target_type}\"" "${MANIFEST_FILE}")
+        log_info "Sincronizando ${target_type}..."
+        sync_target "${agent}" "${target_type}" "${source_type}"
+    done <<< "${target_types}"
 }
 
 # =============================================================================
@@ -300,8 +164,8 @@ list_agents() {
             install_text="instalado"
         fi
 
-        echo -e "  ${CYAN}${agent}${NC} - ${description}"
-        echo -e "    Estado: ${status_color}${status_text}${NC} | ${install_color}${install_text}${NC}"
+        echo -e "  ${CYAN}${agent}${NC} - ${description}" >&2
+        echo -e "    Estado: ${status_color}${status_text}${NC} | ${install_color}${install_text}${NC}" >&2
     done <<< "${agents}"
 }
 
@@ -313,6 +177,10 @@ parse_args() {
     while [[ $# -gt 0 ]]; do
         case $1 in
             --agent|-a)
+                if [[ $# -lt 2 ]]; then
+                    log_error "--agent requiere un nombre de agente"
+                    exit 1
+                fi
                 SPECIFIC_AGENT="$2"
                 shift 2
                 ;;
@@ -373,14 +241,7 @@ main() {
     check_dependencies
 
     # Obtener directorio de contenido desde manifest (v2.0)
-    local content_dir_name
-    content_dir_name=$(yq '.content_dir // ""' "${MANIFEST_FILE}")
-    if [[ -n "${content_dir_name}" && "${content_dir_name}" != "null" ]]; then
-        CONTENT_DIR="${REPO_ROOT}/${content_dir_name}"
-    else
-        # Fallback para v1.0 (compatibilidad)
-        CONTENT_DIR="${REPO_ROOT}"
-    fi
+    CONTENT_DIR=$(resolve_content_dir "${REPO_ROOT}" "${MANIFEST_FILE}")
 
     log_section "Agent Development Rules - Sincronización v2.0"
     log_info "Manifest: ${MANIFEST_FILE}"
@@ -406,6 +267,11 @@ main() {
     fi
 
     if [[ -n "${SPECIFIC_AGENT}" ]]; then
+        # Validar formato del nombre de agente
+        if ! [[ "${SPECIFIC_AGENT}" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+            log_error "Nombre de agente inválido: '${SPECIFIC_AGENT}' (solo alfanuméricos, guiones y guiones bajos)"
+            exit 1
+        fi
         # Sincronizar agente específico
         sync_agent "${SPECIFIC_AGENT}"
     else
@@ -422,8 +288,10 @@ main() {
         done <<< "${agents}"
     fi
 
-    echo ""
+    echo "" >&2
     log_info "✓ Sincronización completada"
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi

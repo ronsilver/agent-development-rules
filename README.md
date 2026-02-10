@@ -71,15 +71,19 @@ agent-development-rules/
 ├── config/                    # Configuration examples
 │   └── .pre-commit-config.yaml.example
 │
-└── scripts/                   # Automation
-    ├── sync.sh                #   Sync rules to agents
-    ├── validate.sh            #   Validate configuration
-    └── lib/
-        ├── common.sh          #   Shared functions
-        └── agents/            #   Agent-specific sync logic
-            ├── windsurf.sh
-            ├── copilot.sh
-            └── cursor.sh
+├── scripts/                   # Automation
+│   ├── sync.sh                #   Sync rules to agents
+│   ├── validate.sh            #   Validate configuration
+│   └── lib/
+│       ├── common.sh          #   Shared functions
+│       └── sync.sh            #   Sync implementation
+│
+├── tests/                     # Script tests (bats)
+│   ├── test_common.bats       #   Tests for common.sh
+│   ├── test_sync.bats         #   Tests for sync.sh
+│   └── test_validate.bats     #   Tests for validate.sh
+│
+└── Makefile                   # lint, fmt, test, validate, sync
 ```
 
 ## Usage
@@ -97,6 +101,9 @@ agent-development-rules/
 
 # Dry run (see what would happen)
 ./scripts/sync.sh --dry-run
+
+# Create backups before overwriting
+./scripts/sync.sh --backup
 
 # Validate configuration before syncing
 ./scripts/sync.sh --validate
@@ -321,10 +328,19 @@ Reads `manifest.yaml` and syncs rules, workflows, and prompts to each agent's co
 
 Validates the entire configuration: manifest syntax, file references, content directory structure, and frontmatter consistency.
 
-### `lib/`
+### `lib/common.sh`
 
-- **common.sh** - Shared logging, file operations, frontmatter extraction.
-- **agents/** - Agent-specific sync logic (`windsurf.sh`, `copilot.sh`, `cursor.sh`).
+Shared logging, file operations, frontmatter extraction, and safe path expansion.
+
+### `Makefile`
+
+Run the full validation chain for the project itself:
+
+```bash
+make check    # lint → fmt-check → validate → test
+make sync     # Sync rules to all agents
+make help     # Show all available targets
+```
 
 ## License
 
