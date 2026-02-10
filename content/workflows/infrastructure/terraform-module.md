@@ -15,6 +15,7 @@ Create reusable, well-documented Terraform modules following HashiCorp best prac
 | `terraform-docs` | Documentation | `brew install terraform-docs` |
 | `tflint` | Linting | `brew install tflint` |
 | `checkov` | Security scanning | `pip install checkov` |
+| `trivy` | Vulnerability scanning | `brew install trivy` |
 
 ## 1. Module Structure
 
@@ -243,6 +244,7 @@ tflint --recursive
 
 # Security scan
 checkov -d . --compact
+trivy config . --severity HIGH,CRITICAL
 # Review HIGH/CRITICAL findings
 ```
 
@@ -321,6 +323,7 @@ content: |
 - [ ] `terraform validate` passes
 - [ ] `tflint` passes
 - [ ] `checkov` has no HIGH/CRITICAL issues
+- [ ] `trivy config` passes (no HIGH/CRITICAL misconfigurations)
 - [ ] Example can be applied successfully
 
 ## Common Patterns

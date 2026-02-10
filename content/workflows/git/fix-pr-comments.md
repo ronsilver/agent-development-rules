@@ -165,10 +165,7 @@ Ready for re-review!"
 ```
 
 **Or resolve individual threads:**
-```bash
-# Mark conversation as resolved (via GitHub UI or API)
-gh api repos/:owner/:repo/pulls/<pr-number>/reviews/<review-id>/dismiss
-```
+Resolve conversation threads via the GitHub UI (no direct REST API equivalent — requires GraphQL `resolveReviewThread` mutation).
 
 ## Comment Response Examples
 

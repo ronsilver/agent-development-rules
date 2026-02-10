@@ -9,32 +9,14 @@ agent-development-rules/
 ├── manifest.yaml              # Central configuration (v2.0)
 │
 ├── content/                   # All source content
-│   ├── rules/                 # Development rules
-│   │   ├── core/              # Fundamental rules
-│   │   │   ├── global.md      #   Agent behavior & persona
-│   │   │   ├── clean-code.md  #   CUPID, DRY, KISS, YAGNI
-│   │   │   └── solid.md       #   SOLID principles
-│   │   ├── languages/         # Language-specific
-│   │   │   ├── go.md          #   Go idioms & tooling
-│   │   │   ├── python.md      #   Type hints, Ruff, Pydantic
-│   │   │   ├── nodejs.md      #   TypeScript strict, ESLint flat
-│   │   │   └── bash.md        #   Shell scripting & ShellCheck
-│   │   ├── infrastructure/    # IaC & DevOps
-│   │   │   ├── terraform.md   #   TFLint, Checkov, tfsec
-│   │   │   ├── aws.md         #   IAM, S3, Security Groups
-│   │   │   ├── docker.md      #   Multi-stage, Hadolint
-│   │   │   └── kubernetes.md  #   Security, probes, HPA
-│   │   ├── quality/           # Code quality
-│   │   │   ├── testing.md     #   TDD, pyramid, coverage
-│   │   │   ├── security.md    #   OWASP Top 10:2025
-│   │   │   ├── performance.md #   Profiling, caching, Big O
-│   │   │   ├── scalability.md #   Stateless, resilience
-│   │   │   ├── linting.md     #   Golden chain, all linters
-│   │   │   └── accessibility.md # WCAG 2.1, ARIA
-│   │   ├── process/           # Development processes
-│   │   │   ├── git.md         #   Conventional Commits (strict)
-│   │   │   ├── documentation.md # ADRs, READMEs, docstrings
-│   │   │   └── operational-excellence.md # SRE, observability
+│   ├── rules/                 # Development rules (always in context)
+│   │   ├── core/              # Agent behavior
+│   │   │   └── agent-behavior.md  # 6 pillars (architecture, quality,
+│   │   │                          # performance, security, docs, scalability)
+│   │   ├── quality/           # Linting tools
+│   │   │   └── linting.md     #   Golden chain, all linters
+│   │   ├── process/           # Git workflow
+│   │   │   └── git.md         #   Conventional Commits (strict)
 │   │   └── agents/            # Agent-specific behavior
 │   │       ├── windsurf.md    #   Windsurf/Cascade rules
 │   │       └── copilot.md     #   GitHub Copilot rules
@@ -45,16 +27,26 @@ agent-development-rules/
 │   │   ├── infrastructure/    #   terraform-module, docker-build, k8s-validate
 │   │   └── security/          #   security-check
 │   │
-│   └── prompts/               # Reusable prompts
-│       ├── review.prompt.md   #   Code review
-│       ├── security.prompt.md #   Security audit
-│       ├── test.prompt.md     #   Test generation
-│       ├── refactor.prompt.md #   Refactoring
-│       ├── document.prompt.md #   Documentation
-│       ├── validate.prompt.md #   Project validation
-│       ├── commit.prompt.md   #   Conventional Commits
-│       ├── explain.prompt.md  #   Code explanation
-│       └── debug.prompt.md    #   Debugging assistant
+│   ├── prompts/               # Reusable prompts
+│   │   ├── review.prompt.md   #   Code review
+│   │   ├── security.prompt.md #   Security audit
+│   │   ├── test.prompt.md     #   Test generation
+│   │   ├── refactor.prompt.md #   Refactoring
+│   │   ├── document.prompt.md #   Documentation
+│   │   ├── validate.prompt.md #   Project validation
+│   │   ├── commit.prompt.md   #   Conventional Commits
+│   │   ├── explain.prompt.md  #   Code explanation
+│   │   └── debug.prompt.md    #   Debugging assistant
+│   │
+│   └── skills/                # Agent Skills (on-demand capabilities)
+│       ├── code-review/       #   Code review with checklists
+│       │   ├── SKILL.md
+│       │   └── references/
+│       ├── git-commit-formatter/ # Conventional Commits enforcer
+│       │   └── SKILL.md
+│       └── security-audit/    #   OWASP security audit
+│           ├── SKILL.md
+│           └── references/
 │
 ├── templates/                 # Reusable document templates
 │   ├── pull-request.md        #   PR description template
@@ -167,41 +159,28 @@ agents:
 2. Add it to `manifest.yaml` under `rules.files` (path relative to `content/rules/`).
 3. Run `./scripts/sync.sh`.
 
-## Rule Content
+## Rules (Always in Context)
 
-### Core
-- **global.md** - Agent behavior, persona, validation chain, zero trust
-- **clean-code.md** - CUPID principles, DRY, KISS, YAGNI, code smells
-- **solid.md** - SOLID with Python/Go examples, refactoring triggers
+Rules define **principles and personality** — loaded on every interaction.
 
-### Languages
-- **go.md** - Error handling, golangci-lint, testing, security
-- **python.md** - Type hints, Ruff, Pydantic, Pytest, Bandit
-- **nodejs.md** - TypeScript strict, ESLint flat config, Vitest, Zod
-- **bash.md** - `set -euo pipefail`, shfmt, ShellCheck
+### Core — 6 Pillars (`agent-behavior.md`)
 
-### Infrastructure
-- **terraform.md** - TFLint, Checkov, tfsec, pre-commit, CI/CD
-- **aws.md** - IAM least privilege, Security Groups, S3, secrets
-- **docker.md** - Multi-stage builds, non-root, Hadolint, secrets
-- **kubernetes.md** - SecurityContext, probes, NetworkPolicy, HPA
+| # | Pillar | What it Covers |
+|---|--------|----------------|
+| 1 | **Architecture & Solution Design** | Thinking process, CUPID, SOLID triggers, dependency inversion |
+| 2 | **Code Quality & Best Practices** | DRY/KISS/YAGNI, code limits, smells, early returns, naming |
+| 3 | **Performance & Optimization** | Measure first, Big O, N+1, caching, connection pooling |
+| 4 | **Security & Error Handling** | Zero trust, input validation, error patterns, self-check loop |
+| 5 | **Documentation & Maintainability** | Comments (why not what), validation chain (format→lint→test→security) |
+| 6 | **Scalability & Resilience** | Stateless, circuit breaker, retry, rate limiting, graceful degradation |
 
-### Quality
-- **testing.md** - TDD, test pyramid, coverage, AAA, test doubles
-- **security.md** - OWASP Top 10:2025, input validation, cryptography
-- **performance.md** - Profiling, Big O, N+1, caching, memory
-- **scalability.md** - Stateless, connection pooling, resilience patterns
-- **linting.md** - Golden chain, linters by language, pre-commit, CI/CD
-- **accessibility.md** - WCAG 2.1 POUR, semantic HTML, ARIA
-
-### Process
-- **git.md** - Conventional Commits (strict), branching, PRs
-- **documentation.md** - ADRs, README standard, docstrings, Mermaid
-- **operational-excellence.md** - Observability, alerting, SLI/SLO, incidents
+### Quality & Process
+- **linting.md** — Golden chain, linters by language, pre-commit, CI/CD
+- **git.md** — Conventional Commits (strict), branching, PRs
 
 ### Agents
-- **windsurf.md** - Windsurf/Cascade specific behavior
-- **copilot.md** - GitHub Copilot specific behavior
+- **windsurf.md** — Windsurf/Cascade specific behavior
+- **copilot.md** — GitHub Copilot specific behavior
 
 ## Quality Gates
 
@@ -250,19 +229,104 @@ pre-commit install
 
 ## Supported Agents
 
-| Agent | Status | Description |
-|-------|--------|-------------|
-| **windsurf** | ✅ Enabled | Windsurf IDE / Codeium Cascade |
-| **copilot-cli** | ✅ Enabled | GitHub Copilot CLI (`gh copilot`) |
-| **copilot-vscode** | ✅ Enabled | GitHub Copilot (VS Code) |
-| **copilot-intellij** | ✅ Enabled | GitHub Copilot (IntelliJ/JetBrains) |
-| **cursor** | ✅ Enabled | Cursor IDE |
-| **claude-code** | ✅ Enabled | Claude Code (Anthropic) |
-| **codex-cli** | ✅ Enabled | OpenAI Codex CLI |
-| **gemini-cli** | ✅ Enabled | Google Gemini CLI |
-| **antigravity** | ✅ Enabled | Google Antigravity IDE |
-| **opencode** | ✅ Enabled | OpenCode |
-| **local-project** | ⬜ Disabled | Copy rules to local project |
+| Agent | Status | Skills | Description |
+|-------|--------|--------|-------------|
+| **windsurf** | ✅ Enabled | ✅ | Windsurf IDE / Codeium Cascade |
+| **copilot-cli** | ✅ Enabled | — | GitHub Copilot CLI (`gh copilot`) |
+| **copilot-vscode** | ✅ Enabled | ✅ | GitHub Copilot (VS Code) |
+| **copilot-intellij** | ✅ Enabled | — | GitHub Copilot (IntelliJ/JetBrains) |
+| **cursor** | ✅ Enabled | — | Cursor IDE |
+| **claude-code** | ✅ Enabled | ✅ | Claude Code (Anthropic) |
+| **codex-cli** | ✅ Enabled | — | OpenAI Codex CLI |
+| **gemini-cli** | ✅ Enabled | — | Google Gemini CLI |
+| **antigravity** | ✅ Enabled | ✅ | Google Antigravity IDE |
+| **opencode** | ✅ Enabled | — | OpenCode |
+| **local-project** | ⬜ Disabled | — | Copy rules to local project |
+
+## Agent Skills
+
+Agent Skills are an [open standard](https://agentskills.io) for on-demand agent capabilities. Unlike rules (always active) or workflows (slash-command triggered), skills are **automatically invoked** when the agent detects relevance to the user's request.
+
+### How Skills Work (Progressive Disclosure)
+
+| Level | Content | When Loaded | Tokens |
+|-------|---------|-------------|--------|
+| **L1: Metadata** | `name` + `description` | Always (startup) | ~100/skill |
+| **L2: Instructions** | Full `SKILL.md` body | When agent detects relevance | <5000 recommended |
+| **L3: Resources** | `scripts/`, `references/`, `assets/` | Only when referenced | Variable |
+
+### Skill Structure
+
+```
+content/skills/my-skill/
+├── SKILL.md           # Required — YAML frontmatter + instructions
+├── scripts/           # Optional — executable scripts
+├── references/        # Optional — documentation, templates
+└── assets/            # Optional — images, data files
+```
+
+### SKILL.md Format
+
+```markdown
+---
+name: my-skill
+description: What this skill does and when to use it.
+license: MIT
+metadata:
+  author: your-org
+  version: "1.0"
+---
+
+# My Skill
+
+## Instructions
+1. Step one...
+2. Step two...
+
+## Examples
+...
+```
+
+### Included Skills (16)
+
+**Development:**
+- **code-review** — Phased code review with severity labels, question technique, and PR/local detection
+- **git-commit-formatter** — Conventional Commits with diff analysis, multi-commit strategy, and verification
+- **refactoring** — Code smell detection with incremental refactoring patterns and behavior-preserving constraints
+- **systematic-debugging** — Root-cause analysis with hypothesis-driven debugging, git bisect, and strategic logging
+- **test-driven-development** — Red-Green-Refactor cycle with AAA pattern, table-driven tests, and coverage targets
+- **performance-optimization** — Profile-first optimization with per-language profilers, Big-O analysis, and caching
+- **verification-before-completion** — Ensures all completion claims are backed by fresh verification evidence
+
+**Infrastructure:**
+- **docker-expert** — Secure, optimized Docker images with multi-stage builds, hadolint, and vulnerability scanning
+- **terraform-expert** — 3-layer validation (tflint, checkov, tfsec), module structure, and IaC best practices
+- **aws-cloud-expert** — Least privilege IAM, S3 security, encryption, tagging, and cost control
+- **kubernetes-expert** — Security contexts, resource limits, probes, network policies, and HPA
+
+**Quality & Process:**
+- **security-audit** — OWASP Top 10:2025 audit with dependency scanning, secrets detection, and structured reports
+- **accessibility-compliance** — WCAG 2.1 Level AA with semantic HTML, ARIA, keyboard navigation, and contrast
+- **scalability-patterns** — Stateless services, async processing, caching, circuit breakers, and rate limiting
+- **documentation-generator** — READMEs, CHANGELOGs, ADRs, docstrings, and architecture diagrams
+- **operational-excellence** — SRE observability (logs, metrics, tracing), alerting, SLOs, and incident management
+
+### Adding a New Skill
+
+1. Create a directory in `content/skills/<skill-name>/` with a `SKILL.md` file.
+2. Add it to `manifest.yaml` under `skills.directories`.
+3. Run `./scripts/sync.sh`.
+
+### Skills Destination Paths
+
+| Agent | Global Skills Path |
+|-------|--------------------|
+| **Windsurf** | `~/.codeium/windsurf/skills/<name>/` |
+| **Claude Code** | `~/.claude/skills/<name>/` |
+| **Copilot VS Code** | `~/.copilot/skills/<name>/` |
+| **Antigravity** | `~/.gemini/antigravity/skills/<name>/` |
+
+For the full specification, see [agentskills.io/specification](https://agentskills.io/specification).
 
 ## Development
 

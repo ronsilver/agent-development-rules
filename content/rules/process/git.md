@@ -1,6 +1,5 @@
 ---
-trigger: glob
-globs: [".github/**", ".gitignore", ".gitattributes", "CONTRIBUTING.md", "CHANGELOG.md"]
+trigger: always
 ---
 
 # Git Best Practices

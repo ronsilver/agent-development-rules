@@ -125,7 +125,6 @@ npm run lint:security         # Node (eslint-plugin-security)
 ```bash
 # // turbo
 trivy config . --severity HIGH,CRITICAL
-# Or: tfsec .
 # STOP if HIGH/CRITICAL issues
 
 # Check for common misconfigs
@@ -163,7 +162,7 @@ trivy image app:local --severity HIGH,CRITICAL
 grep -rE 'uses:\s*[^@]+@(main|master|v\d+)' .github/workflows/
 
 # Should be pinned by SHA:
-# uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+# uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 ```
 
 ## 6. Report Format

@@ -1,116 +1,14 @@
 ---
 name: Validate
 description: Validate project using appropriate tools for quality and correctness
-version: "1.0"
 trigger: manual
-tags:
-  - validation
-  - analysis
-  - linting
-  - quality
+tags: [validation, quality, linting]
+workflow: validation/validate
 ---
 
 # Validate
 
-Validate the current project using appropriate tools to ensure code quality, correctness, and security.
-
-## Project Detection
-
-| Marker File | Project Type | Priority |
-|-------------|--------------|----------|
-| `*.tf` | Terraform | 1 |
-| `go.mod` | Go | 2 |
-| `pyproject.toml` / `requirements.txt` | Python | 3 |
-| `package.json` + `tsconfig.json` | TypeScript | 4 |
-| `package.json` (no tsconfig) | Node.js | 5 |
-| `Cargo.toml` | Rust | 6 |
-| `pom.xml` / `build.gradle` | Java | 7 |
-| `*.csproj` / `*.sln` | C# / .NET | 8 |
-| `*.sh` | Bash | 9 |
-| `Dockerfile` | Docker | 10 |
-| `Chart.yaml` | Helm | 11 |
-
-**Multi-language projects**: Run validation for ALL detected types, in priority order.
-
-## Validation Commands
-
-### Terraform
-```bash
-terraform fmt -check -recursive
-terraform init -backend=false
-terraform validate
-tflint --recursive          # If .tflint.hcl exists
-```
-
-### Go
-```bash
-gofmt -l .                      # List unformatted files (recursive)
-go vet ./...
-golangci-lint run           # Requires .golangci.yml
-go test -race ./...
-```
-
-### Python
-```bash
-ruff format . --check
-ruff check .
-mypy src/                   # Or mypy . if no src/
-pytest --tb=short
-```
-
-### TypeScript / Node.js
-```bash
-npm run typecheck           # Or: npx tsc --noEmit
-npm run lint                # Or: npx eslint .
-npm test
-```
-
-### Rust
-```bash
-cargo fmt --check
-cargo clippy -- -D warnings
-cargo test
-```
-
-### Java (Maven)
-```bash
-mvn spotless:check           # Or: mvn fmt:check
-mvn compile
-mvn test
-```
-
-### C# / .NET
-```bash
-dotnet format --verify-no-changes
-dotnet build --no-restore
-dotnet test --no-build
-```
-
-### Bash
-```bash
-shfmt -d .                  # Format check (recursive)
-find . -name '*.sh' -exec shellcheck {} +
-```
-
-### Docker
-```bash
-hadolint Dockerfile
-docker scout quickview .    # Or: trivy fs .
-```
-
-### Helm
-```bash
-helm lint ./chart
-helm template ./chart > /dev/null
-```
-
-## Instructions
-
-1. **Detect** project type(s) based on marker files
-2. **Verify** prerequisites — check required tools are installed
-3. **Execute** validation commands in order
-4. **Stop immediately** if any command fails (exit code != 0)
-5. **Report** results with actionable details
+Validate the current project using appropriate tools for quality and correctness. Follow the **validation/validate** workflow for project detection, commands, and execution strategy.
 
 ## Report Format
 
@@ -140,37 +38,10 @@ Suggested fix:
   }
 ```
 
-### Warnings
-```
-⚠️ Validation passed with warnings
+## Instructions
 
-Warning: pytest collected 0 tests
-Action: Verify test files match pattern test_*.py or *_test.py
-```
-
-## Common Issues & Solutions
-
-| Error | Cause | Solution |
-|-------|-------|----------|
-| `golangci-lint: command not found` | Tool not installed | `go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest` |
-| `ruff: command not found` | Tool not installed | `pip install ruff` |
-| `terraform init required` | Backend not initialized | Run `terraform init -backend=false` |
-| `no tests found` | Wrong test naming | Use `test_*.py` (Python) or `*_test.go` (Go) |
-| `type errors in node_modules` | Missing excludes | Add `"exclude": ["node_modules"]` to tsconfig.json |
-
-## Prerequisites
-
-Ensure these tools are installed before running validation:
-
-| Project | Required Tools |
-|---------|---------------|
-| Terraform | `terraform`, `tflint` |
-| Go | `go`, `golangci-lint` |
-| Python | `python`, `ruff`, `mypy`, `pytest` |
-| Node/TS | `node`, `npm`, `tsc` |
-| Rust | `cargo`, `clippy`, `rustfmt` |
-| Java | `mvn` or `gradle`, `spotless` |
-| C# / .NET | `dotnet` |
-| Bash | `shfmt`, `shellcheck` |
-| Docker | `hadolint`, `docker` or `trivy` |
-| Helm | `helm`, `kubeval` |
+1. **Detect** project type(s) based on marker files
+2. **Verify** prerequisites — check required tools are installed
+3. **Execute** validation commands in order
+4. **Stop immediately** if any command fails (exit code != 0)
+5. **Report** results with actionable details

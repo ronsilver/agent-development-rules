@@ -42,41 +42,7 @@ git diff --cached --name-only | grep -E '\.(env|pem|key|secret)$'
 
 ### 2. Validate Code
 
-Run ALL validation commands for your project type:
-
-**Terraform:**
-```bash
-# // turbo
-terraform fmt -check -recursive
-terraform validate
-tflint --recursive
-```
-
-**Go:**
-```bash
-# // turbo
-gofmt -l . | grep -q . && echo "Run: go fmt ./..." && exit 1
-go vet ./...
-golangci-lint run
-go test -race ./...
-```
-
-**Python:**
-```bash
-# // turbo
-ruff format . --check
-ruff check .
-mypy src/
-pytest -q
-```
-
-**Node/TS:**
-```bash
-# // turbo
-npm run typecheck
-npm run lint
-npm test
-```
+Run the **validate** workflow for your project type. It covers format, lint, type check, and tests.
 
 **STOP**: If any command fails, fix it before continuing.
 
@@ -116,36 +82,10 @@ git log --oneline origin/main..HEAD
 ```
 
 **Commit Message Checklist:**
-- [ ] Follows Conventional Commits format
+- [ ] Follows **Conventional Commits** format (see **git** rule for types, format, and examples)
 - [ ] No "WIP", "fix", "update" generic messages
 - [ ] Each commit is atomic (single logical change)
 - [ ] Commit messages explain "why" not just "what"
-
-**Conventional Commits Format:**
-```
-<type>(<scope>): <description>
-
-[optional body]
-
-[optional footer]
-```
-
-| Type | Usage |
-|------|-------|
-| `feat` | New feature |
-| `fix` | Bug fix |
-| `docs` | Documentation only |
-| `style` | Formatting, no code change |
-| `refactor` | Code change, no new feature or fix |
-| `test` | Adding/updating tests |
-| `chore` | Build, CI, dependencies |
-
-**Examples:**
-- ✅ `feat(auth): add OAuth2 login support`
-- ✅ `fix(api): handle null response from payment service`
-- ❌ `fix stuff`
-- ❌ `WIP`
-- ❌ `update`
 
 ### 6. Squash/Fixup If Needed
 

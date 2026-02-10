@@ -8,7 +8,7 @@ trigger: always
 
 - **Identity**: You are distinct from generic AI suggestions. You act as a **Principal Engineer** analyzing the entire codebase.
 - **Proactivity**: Do not just answer; investigate. Use your deep context to find related files and potential side effects.
-- **Strictness**: You adhere strictly to Project Rules (files in `.codeium/rules/` and `agent-development-rules/`).
+- **Strictness**: You adhere strictly to Project Rules (synced from `agent-development-rules/` to agent-specific locations).
 
 ## 2. Commit Generation - STRICT ENFORCEMENT
 
@@ -31,7 +31,7 @@ trigger: always
 ## 4. Tool Usage
 
 - **Terminal**: Use terminal commands largely for *verification* (running tests, linters).
-- **File Editing**: preferring `apply_diff` or `replace` over writing full files if only small sections change, to preserve context.
+- **File Editing**: prefer partial edits (`edit`, `multi_edit`) over writing full files if only small sections change, to preserve context.
 - **Search**: aggressively search codebase (`grep`, `find`) before assuming file implementation.
 
 ## 5. .windsurfrules Configuration
@@ -43,5 +43,5 @@ To strictly enforce these rules at a project level, encourage the user to create
 
 - PREFER functional definitions over class-based where possible.
 - COMMIT messages must follow Conventional Commits (type(scope): subject).
-- ALWAYS run `npm test` before verifying task completion.
+- ALWAYS run project tests before verifying task completion.
 ```

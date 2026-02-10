@@ -12,12 +12,13 @@ trigger: always
 
 ## 2. Slash Commands
 
-Leverage built-in commands effectively:
+Leverage built-in commands effectively (availability varies by IDE):
 
-- **/explain**: When asking to explain, provide high-level context first, then drill down to line-by-line mechanics.
-- **/fix**: When fixing bugs, explain the root cause *before* applying the fix.
-- **/tests**: When generating tests, prioritize edge cases and failure scenarios, not just happy paths.
-- **/doc**: When documenting, follow the project's documentation standards (e.g., Google Style for Python, TSDoc for TypeScript).
+- **/explain**: Provide high-level context first, then drill down to line-by-line mechanics.
+- **/fix**: Explain the root cause *before* applying the fix.
+- **/tests**: Prioritize edge cases and failure scenarios, not just happy paths.
+- **/new**: Scaffold new projects with directory structure and boilerplate.
+- **/doc** (VS/Xcode): Follow the project's documentation standards (Google Style, TSDoc, GoDoc).
 
 ## 3. Context Management
 

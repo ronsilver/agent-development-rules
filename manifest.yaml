@@ -18,32 +18,13 @@ content_dir: "content"
 rules:
   source_dir: "rules"
   files:
-    # Core - Reglas fundamentales
-    - core/global.md
-    - core/clean-code.md
-    - core/solid.md
-    # Languages - Por lenguaje
-    - languages/go.md
-    - languages/python.md
-    - languages/nodejs.md
-    - languages/bash.md
-    # Infrastructure - IaC y DevOps
-    - infrastructure/terraform.md
-    - infrastructure/docker.md
-    - infrastructure/kubernetes.md
-    - infrastructure/aws.md
-    # Quality - Calidad de código
-    - quality/testing.md
-    - quality/security.md
-    - quality/performance.md
-    - quality/scalability.md
+    # Core - 6 pilares del agente (siempre en contexto)
+    - core/agent-behavior.md
+    # Quality - Linting (glob-triggered)
     - quality/linting.md
-    - quality/accessibility.md
-    # Process - Procesos de desarrollo
+    # Process - Git (glob-triggered)
     - process/git.md
-    - process/documentation.md
-    - process/operational-excellence.md
-    # Agents - Específico por agente
+    # Agents - Comportamiento específico por agente
     - agents/windsurf.md
     - agents/copilot.md
 
@@ -78,6 +59,28 @@ prompts:
     - explain.prompt.md
     - debug.prompt.md
     - optimize.prompt.md
+
+skills:
+  source_dir: "skills"
+  # Skills are directory-based (each entry is a directory name containing SKILL.md)
+  # See: https://agentskills.io/specification
+  directories:
+    - accessibility-compliance
+    - aws-cloud-expert
+    - code-review
+    - docker-expert
+    - documentation-generator
+    - git-commit-formatter
+    - kubernetes-expert
+    - operational-excellence
+    - performance-optimization
+    - refactoring
+    - scalability-patterns
+    - security-audit
+    - systematic-debugging
+    - terraform-expert
+    - test-driven-development
+    - verification-before-completion
 
 # =============================================================================
 # Configuración por Agente
@@ -122,6 +125,10 @@ agents:
 
           <!-- Generado automáticamente por sync.sh -->
           <!-- Última actualización: {{timestamp}} -->
+
+      skills:
+        path: "${HOME}/.codeium/windsurf/skills"
+        format: directory
 
   copilot-cli:
     enabled: true
@@ -180,6 +187,10 @@ agents:
           <!-- Generado automáticamente por sync.sh -->
           <!-- Última actualización: {{timestamp}} -->
 
+      skills:
+        path: "${HOME}/.copilot/skills"
+        format: directory
+
   copilot-intellij:
     enabled: true
     description: "GitHub Copilot (IntelliJ/JetBrains)"
@@ -226,16 +237,18 @@ agents:
     targets:
       rules:
         path: "${HOME}/.cursor/rules"
-        format: individual
-        output_extension: ".mdc"
-        strip_frontmatter: false
-        transform_frontmatter: true # paths -> globs, add description
+        format: merged
+        output_filename: "global.mdc"
+        strip_frontmatter: true
         header: |
           ---
-          description: "{{name}}"
+          description: "Global development rules"
           globs: []
           alwaysApply: true
           ---
+
+          <!-- Generado automáticamente por sync.sh -->
+          <!-- Última actualización: {{timestamp}} -->
 
   claude-code:
     enabled: true
@@ -246,19 +259,18 @@ agents:
       commands: []
     targets:
       rules:
-        path: "${HOME}/.claude/rules"
-        format: individual
-        strip_frontmatter: false
-      instructions:
         path: "${HOME}/.claude/CLAUDE.md"
         format: merged
         strip_frontmatter: true
-        source_type: "rules"
         header: |
           # Claude Code - Global Instructions
 
           <!-- Generado automáticamente por sync.sh -->
           <!-- Última actualización: {{timestamp}} -->
+
+      skills:
+        path: "${HOME}/.claude/skills"
+        format: directory
 
   codex-cli:
     enabled: true
@@ -269,14 +281,9 @@ agents:
         - "codex --version"
     targets:
       rules:
-        path: "${HOME}/.codex/rules"
-        format: individual
-        strip_frontmatter: false
-      instructions:
         path: "${HOME}/.codex/AGENTS.md"
         format: merged
         strip_frontmatter: true
-        source_type: "rules"
         header: |
           # Codex CLI - Global Instructions
 
@@ -292,14 +299,9 @@ agents:
         - "gemini --version"
     targets:
       rules:
-        path: "${HOME}/.gemini/rules"
-        format: individual
-        strip_frontmatter: false
-      instructions:
         path: "${HOME}/.gemini/GEMINI.md"
         format: merged
         strip_frontmatter: true
-        source_type: "rules"
         header: |
           # Gemini CLI - Global Instructions
 
@@ -316,14 +318,9 @@ agents:
       commands: []
     targets:
       rules:
-        path: "${HOME}/.gemini/antigravity/rules"
-        format: individual
-        strip_frontmatter: false
-      instructions:
         path: "${HOME}/.gemini/GEMINI-antigravity.md"
         format: merged
         strip_frontmatter: true
-        source_type: "rules"
         header: |
           # Google Antigravity - Global Instructions
 
@@ -332,8 +329,18 @@ agents:
 
       workflows:
         path: "${HOME}/.gemini/antigravity/global_workflows"
-        format: individual
-        strip_frontmatter: false
+        format: merged
+        output_filename: "default.md"
+        strip_frontmatter: true
+        header: |
+          # Antigravity - Global Workflows
+
+          <!-- Generado automáticamente por sync.sh -->
+          <!-- Última actualización: {{timestamp}} -->
+
+      skills:
+        path: "${HOME}/.gemini/antigravity/skills"
+        format: directory
 
   opencode:
     enabled: true
@@ -344,14 +351,9 @@ agents:
         - "opencode --version"
     targets:
       rules:
-        path: "${HOME}/.opencode/rules"
-        format: individual
-        strip_frontmatter: false
-      instructions:
         path: "${HOME}/.opencode/AGENTS.md"
         format: merged
         strip_frontmatter: true
-        source_type: "rules"
         header: |
           # OpenCode - Global Instructions
 
@@ -364,9 +366,29 @@ agents:
     targets:
       rules:
         path: "${REPO_ROOT}/.windsurf/rules"
-        format: individual
-        strip_frontmatter: false
+        format: merged
+        output_filename: "global.md"
+        strip_frontmatter: true
+        header: |
+          ---
+          trigger: always
+          ---
+
+          # Project Rules
+
+          <!-- Generado automáticamente por sync.sh -->
+          <!-- Última actualización: {{timestamp}} -->
+
       workflows:
         path: "${REPO_ROOT}/.windsurf/workflows"
-        format: individual
-        strip_frontmatter: false
+        format: merged
+        output_filename: "default.md"
+        strip_frontmatter: true
+        header: |
+          ---
+          name: project-workflows
+          description: Workflows del proyecto
+          ---
+
+          <!-- Generado automáticamente por sync.sh -->
+          <!-- Última actualización: {{timestamp}} -->

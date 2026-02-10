@@ -177,6 +177,99 @@ validate_frontmatter() {
     return 0
 }
 
+validate_skills() {
+    log_section "Validando skills"
+
+    local skills_source_dir
+    skills_source_dir=$(yq '.skills.source_dir // "skills"' "$MANIFEST_FILE")
+    local skills_base="${CONTENT_DIR}/${skills_source_dir}"
+
+    # Verificar que el directorio de skills existe
+    if [[ ! -d "${skills_base}" ]]; then
+        log_warn "Directorio de skills no encontrado: ${skills_base}"
+        WARNINGS=$((WARNINGS + 1))
+        return 0
+    fi
+
+    local skill_errors=0
+    local skill_warnings=0
+
+    while IFS= read -r dir_name; do
+        [[ -z "${dir_name}" || "${dir_name}" == "null" ]] && continue
+        local skill_path="${skills_base}/${dir_name}"
+
+        # Verificar que el directorio existe
+        if [[ ! -d "${skill_path}" ]]; then
+            log_error "  Directorio de skill no encontrado: ${skills_source_dir}/${dir_name}"
+            skill_errors=$((skill_errors + 1))
+            continue
+        fi
+
+        # Verificar que SKILL.md existe
+        if [[ ! -f "${skill_path}/SKILL.md" ]]; then
+            log_error "  SKILL.md no encontrado en: ${skills_source_dir}/${dir_name}/"
+            skill_errors=$((skill_errors + 1))
+            continue
+        fi
+
+        # Validar frontmatter de SKILL.md (name y description requeridos)
+        local skill_md="${skill_path}/SKILL.md"
+        if ! has_frontmatter "${skill_md}"; then
+            log_error "  Sin frontmatter en SKILL.md: ${skills_source_dir}/${dir_name}/"
+            skill_errors=$((skill_errors + 1))
+            continue
+        fi
+
+        local fm_content
+        fm_content=$(awk '/^---$/{if(n++)exit}n' "${skill_md}")
+
+        for field in name description license; do
+            if ! printf '%s\n' "${fm_content}" | grep -q "^${field}:"; then
+                log_error "  Falta '${field}' en SKILL.md: ${skills_source_dir}/${dir_name}/"
+                skill_errors=$((skill_errors + 1))
+            fi
+        done
+
+        # Validar que no tenga metadata/version individual (canonical version is in manifest.yaml)
+        if printf '%s\n' "${fm_content}" | grep -q "^metadata:"; then
+            log_warn "  SKILL.md tiene 'metadata' (version es canónica en manifest.yaml): ${skills_source_dir}/${dir_name}/"
+            skill_warnings=$((skill_warnings + 1))
+        fi
+
+        # Validar que name coincide con el nombre del directorio
+        local skill_name
+        skill_name=$(printf '%s\n' "${fm_content}" | grep '^name:' | sed 's/^name:[[:space:]]*//')
+        if [[ -n "${skill_name}" && "${skill_name}" != "${dir_name}" ]]; then
+            log_warn "  Nombre del skill '${skill_name}' no coincide con directorio '${dir_name}'"
+            skill_warnings=$((skill_warnings + 1))
+        fi
+
+        # Validar formato del nombre (lowercase, hyphens, no consecutive hyphens)
+        if [[ -n "${skill_name}" ]] && ! [[ "${skill_name}" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]]; then
+            log_warn "  Nombre del skill no sigue convención (lowercase, hyphens): '${skill_name}'"
+            skill_warnings=$((skill_warnings + 1))
+        fi
+
+        log_debug "  ✓ ${skills_source_dir}/${dir_name}/"
+    done < <(yq '.skills.directories[]' "$MANIFEST_FILE" 2>/dev/null)
+
+    if [[ ${skill_errors} -gt 0 ]]; then
+        log_error "Se encontraron ${skill_errors} errores en skills"
+        ERRORS=$((ERRORS + skill_errors))
+    fi
+
+    if [[ ${skill_warnings} -gt 0 ]]; then
+        log_warn "Se encontraron ${skill_warnings} advertencias en skills"
+        WARNINGS=$((WARNINGS + skill_warnings))
+    fi
+
+    if [[ ${skill_errors} -eq 0 && ${skill_warnings} -eq 0 ]]; then
+        log_success "Todos los skills son válidos"
+    fi
+
+    return 0
+}
+
 validate_agents() {
     log_section "Validando configuración de agentes"
 
@@ -263,6 +356,7 @@ main() {
     if [[ $ERRORS -eq 0 ]]; then
         validate_files || true
         validate_frontmatter || true
+        validate_skills || true
         validate_agents || true
     fi
 

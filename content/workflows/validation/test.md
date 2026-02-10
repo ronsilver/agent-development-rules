@@ -20,7 +20,7 @@ Executes tests with coverage tracking for all supported project types.
 
 ### Minimum Thresholds
 
-> Thresholds (90%/80%/70%) defined in **testing.md § Coverage Requirements**.
+> Thresholds (90%/80%/70%) defined in the **test-driven-development** skill § Coverage Requirements.
 
 **STOP if coverage drops below overall target (70%).**
 
@@ -176,7 +176,7 @@ terraform validate
 
 ## Test Types & Parallel Testing
 
-> For test pyramid (unit/integration/E2E), naming conventions, and parallel testing patterns, see **testing.md**.
+> For test pyramid (unit/integration/E2E), naming conventions, and parallel testing patterns, see the **test-driven-development** skill.
 
 ## CI/CD Integration
 
@@ -191,8 +191,8 @@ jobs:
   test-go:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      - uses: actions/setup-go@v5 # TODO: pin to SHA
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
           go-version: '1.23'
 
@@ -206,15 +206,15 @@ jobs:
           awk '{if ($3+0 < 70) exit 1}'
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v4 # TODO: pin to SHA
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
         with:
           files: ./coverage.out
 
   test-python:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      - uses: actions/setup-python@v5 # TODO: pin to SHA
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.11'
 
@@ -227,15 +227,15 @@ jobs:
         run: pytest --cov=src --cov-fail-under=70
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v4 # TODO: pin to SHA
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
         with:
           files: ./coverage.xml
 
   test-node:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      - uses: actions/setup-node@v4 # TODO: pin to SHA
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
 
@@ -246,7 +246,7 @@ jobs:
         run: npm run test:coverage
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v4 # TODO: pin to SHA
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
 ```
 
 ## Performance Tips

@@ -1,15 +1,27 @@
 ---
-trigger: glob
-globs: ["README.md", "CHANGELOG.md", "docs/**"]
+name: documentation-generator
+description: Generate and maintain project documentation including READMEs, CHANGELOGs, ADRs, docstrings, and architecture diagrams. Use when the user asks to document code, write a README, create an ADR, or improve documentation.
+license: MIT
 ---
 
-# Documentation Best Practices
+# Documentation Generator
 
-## Philosophy
+## Core Principle
 
-**Document the "Why", not the "What"** - Code shows what happens; docs explain why.
+**Document the "Why", not the "What"** — code shows what happens; docs explain why.
 
-## Documentation as Code - MANDATORY
+## Workflow
+
+### Step 1: Detect Documentation Needs
+
+| What exists? | Action |
+|-------------|--------|
+| No README | Create one with standard sections |
+| No CHANGELOG | Create one following Keep a Changelog |
+| No docstrings on public API | Add them |
+| Complex design decision | Create an ADR |
+
+### Step 2: Auto-Generate Where Possible
 
 | Language/Tool | Documentation Tool | Command |
 |--------------|-------------------|---------|
@@ -19,11 +31,9 @@ globs: ["README.md", "CHANGELOG.md", "docs/**"]
 | TypeScript | TypeDoc | `npx typedoc src/` |
 | API | OpenAPI / Swagger | Generate from code annotations |
 
-**Auto-generate where possible** - Manual docs become stale.
+### Step 3: README Standard
 
-## README Standard - MANDATORY
-
-Every project must have a README with these sections:
+Every project MUST have these sections:
 
 ~~~markdown
 # Project Name
@@ -79,9 +89,9 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md).
 MIT
 ~~~
 
-## CHANGELOG - MANDATORY for Libraries/APIs
+### Step 4: CHANGELOG (Keep a Changelog)
 
-Follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) + [Semantic Versioning](https://semver.org/):
+Follow [Keep a Changelog](https://keepachangelog.com/) + [Semantic Versioning](https://semver.org/):
 
 ```markdown
 # Changelog
@@ -111,11 +121,11 @@ Follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) + [Semantic Vers
 - Deprecated `v1` API endpoints
 ```
 
-**Categories:** Added, Changed, Deprecated, Removed, Fixed, Security
+**Categories:** Added, Changed, Deprecated, Removed, Fixed, Security.
 
-## Architecture Decision Records (ADR)
+### Step 5: Architecture Decision Records (ADR)
 
-For significant decisions, create an ADR:
+For significant decisions, create `docs/adr/ADR-NNN-title.md`:
 
 ```markdown
 # ADR-001: Use PostgreSQL for Primary Database
@@ -141,48 +151,7 @@ What are the positive and negative outcomes?
 
 **Store in:** `docs/adr/` or `docs/decisions/`
 
-## Code Comments
-
-### When to Document
-
-| Scenario | Example |
-|----------|---------|
-| Non-obvious business logic | Tax calculation rules |
-| Design decisions | Why Strategy over Factory |
-| Workarounds | Link to issue ticket |
-| Complex algorithms | Time/space complexity |
-| Security considerations | Why input is sanitized |
-| External dependencies | API version constraints |
-
-### When NOT to Document
-
-| Scenario | Why |
-|----------|-----|
-| Self-explanatory code | Noise |
-| Trivial methods | Obvious |
-| Implementation details | May change |
-| Repeating the code | Redundant |
-
-```python
-# ❌ Bad - states the obvious
-# Loop through users
-for user in users:
-
-# ❌ Bad - repeats the code
-# Increment counter by 1
-counter += 1
-
-# ✅ Good - explains WHY
-# Skip first 2 rows: header + metadata per CSV spec v2.1
-start_row = 2
-
-# ✅ Good - explains business rule
-# Premium users get 10% discount, capped at $50
-# per marketing policy POL-2024-123
-discount = min(amount * 0.10, 50)
-```
-
-## Docstring Standards by Language
+## Docstring Standards
 
 ### Python (Google Style)
 ```python
@@ -242,30 +211,51 @@ func ProcessOrder(ctx context.Context, order *Order, user *User) (*OrderResult, 
  * console.log(result.status); // 'completed'
  * ```
  */
-async function processOrder(order: Order, user: User): Promise<OrderResult> {
 ```
 
-## Diagrams as Code
+## Code Comments — When to Document
 
-Use Mermaid for architecture diagrams (renders in GitHub):
+| ✅ Document | ❌ Don't Document |
+|------------|------------------|
+| Non-obvious business logic | Self-explanatory code |
+| Design decisions and trade-offs | Trivial getters/setters |
+| Workarounds (link to ticket) | Implementation details that may change |
+| Complex algorithms (Big-O) | Code that repeats itself |
+| Security considerations | Obvious operations |
 
-~~~markdown
-```mermaid
+```python
+# ❌ Bad — states the obvious
+# Increment counter by 1
+counter += 1
+
+# ✅ Good — explains WHY
+# Skip first 2 rows: header + metadata per CSV spec v2.1
+start_row = 2
+```
+
+## Diagrams as Code (Mermaid)
+
+```markdown
 graph LR
     A[Client] --> B[API Gateway]
     B --> C[Auth Service]
     B --> D[Order Service]
     D --> E[(PostgreSQL)]
-    D --> F[Payment Service]
 ```
-~~~
 
-## Documentation Checklist
+## Checklist
 
-- [ ] README exists with all required sections
+- [ ] README exists with all standard sections
 - [ ] CHANGELOG maintained for versioned projects
 - [ ] Public APIs have docstrings
 - [ ] Complex logic has explanatory comments
 - [ ] Architecture decisions documented (ADR)
 - [ ] Configuration options documented
 - [ ] Examples provided for common use cases
+
+## Constraints
+
+- **NEVER** document the obvious — focus on the "why."
+- **ALWAYS** auto-generate where tools exist (terraform-docs, typedoc, etc.).
+- **ALWAYS** follow the language's standard docstring format.
+- Keep docs close to the code they describe (co-located, not in a separate wiki).

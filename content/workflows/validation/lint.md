@@ -28,11 +28,11 @@ tflint --recursive
 
 # Security scanning
 checkov -d . --compact --quiet
-tfsec .
+trivy config . --severity HIGH,CRITICAL
 # STOP if HIGH/CRITICAL issues found
 ```
 
-**Expected tools**: `terraform`, `tflint`, `checkov`, `tfsec`
+**Expected tools**: `terraform`, `tflint`, `checkov`, `trivy`
 
 ### Go
 ```bash
@@ -136,8 +136,8 @@ docker scout quickview .
 kubeconform -strict -summary *.yaml
 # STOP if invalid
 
-# Best practices
-datree test ./k8s
+# Best practices & security
+kube-linter lint ./k8s
 # STOP if policy violations
 
 # Helm linting (if using Helm)
@@ -145,7 +145,7 @@ helm lint ./chart
 # STOP if errors found
 ```
 
-**Expected tools**: `kubeconform`, `datree`, `helm` (if applicable)
+**Expected tools**: `kubeconform`, `kube-linter`, `helm` (if applicable)
 
 ## Execution Strategy
 
@@ -186,20 +186,20 @@ jobs:
   lint-go:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      - uses: actions/setup-go@v5 # TODO: pin to SHA
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
           go-version: '1.23'
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v4 # TODO: pin to SHA
+        uses: golangci/golangci-lint-action@55c2c1448f86e01eaae002a5a3a9624417608d84 # v6
         with:
           version: v2.1.2
 
   lint-python:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      - uses: actions/setup-python@v5 # TODO: pin to SHA
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.11'
       - name: Install tools
