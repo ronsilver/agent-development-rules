@@ -243,6 +243,11 @@ main() {
     # Obtener directorio de contenido desde manifest (v2.0)
     CONTENT_DIR=$(resolve_content_dir "${REPO_ROOT}" "${MANIFEST_FILE}")
 
+    # Initialize sync registry for stale file cleanup
+    if [[ -z "${SPECIFIC_AGENT}" ]]; then
+        init_sync_registry
+    fi
+
     log_section "Agent Development Rules - Sincronización v2.0"
     log_info "Manifest: ${MANIFEST_FILE}"
     log_info "Content: ${CONTENT_DIR}"
@@ -286,6 +291,15 @@ main() {
                 log_debug "Saltando agente deshabilitado: ${agent}"
             fi
         done <<< "${agents}"
+    fi
+
+    # Cleanup stale files from previous syncs
+    if [[ -z "${SPECIFIC_AGENT}" ]]; then
+        log_section "Cleanup"
+        cleanup_stale_files
+        save_sync_registry
+    else
+        log_debug "Cleanup omitido (sync parcial con --agent)"
     fi
 
     echo "" >&2

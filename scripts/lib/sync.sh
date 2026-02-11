@@ -7,6 +7,71 @@
 #   MANIFEST_FILE, CONTENT_DIR, DRY_RUN, CREATE_BACKUP, TIMESTAMP
 # =============================================================================
 
+# =============================================================================
+# Sync Registry — tracks managed files to detect and remove stale remnants
+# =============================================================================
+
+SYNC_REGISTRY_DIR="${HOME}/.config/agent-development-rules"
+SYNC_REGISTRY="${SYNC_REGISTRY_DIR}/.sync-registry"
+_SYNC_REGISTRY_NEW=""
+
+init_sync_registry() {
+    mkdir -p "${SYNC_REGISTRY_DIR}"
+    _SYNC_REGISTRY_NEW=$(mktemp)
+    log_debug "Registry initialized: ${_SYNC_REGISTRY_NEW}"
+}
+
+register_managed_file() {
+    local file_path="$1"
+    [[ -z "${_SYNC_REGISTRY_NEW}" ]] && return 0
+    echo "${file_path}" >> "${_SYNC_REGISTRY_NEW}"
+}
+
+cleanup_stale_files() {
+    [[ ! -f "${SYNC_REGISTRY}" ]] && return 0
+    [[ -z "${_SYNC_REGISTRY_NEW}" ]] && return 0
+
+    local stale_count=0
+
+    while IFS= read -r old_file; do
+        [[ -z "${old_file}" ]] && continue
+        [[ ! -f "${old_file}" ]] && continue
+
+        if ! grep -qxF "${old_file}" "${_SYNC_REGISTRY_NEW}"; then
+            if [[ "${DRY_RUN}" == "true" ]]; then
+                log_info "[DRY-RUN] Eliminaría stale: ${old_file}"
+            else
+                if [[ "${CREATE_BACKUP}" == "true" ]]; then
+                    backup_file "${old_file}"
+                fi
+                rm -f "${old_file}"
+                log_warn "  ✗ Stale eliminado: ${old_file}"
+            fi
+            stale_count=$((stale_count + 1))
+        fi
+    done < "${SYNC_REGISTRY}"
+
+    if [[ ${stale_count} -gt 0 ]]; then
+        log_info "Cleanup: ${stale_count} archivo(s) stale eliminado(s)"
+    else
+        log_debug "Cleanup: sin archivos stale"
+    fi
+}
+
+save_sync_registry() {
+    [[ -z "${_SYNC_REGISTRY_NEW}" ]] && return 0
+
+    if [[ "${DRY_RUN}" == "true" ]]; then
+        log_debug "[DRY-RUN] Registry no guardado"
+        rm -f "${_SYNC_REGISTRY_NEW}"
+        return 0
+    fi
+
+    sort -u "${_SYNC_REGISTRY_NEW}" > "${SYNC_REGISTRY}"
+    rm -f "${_SYNC_REGISTRY_NEW}"
+    log_debug "Registry guardado: ${SYNC_REGISTRY} ($(wc -l < "${SYNC_REGISTRY}") archivos)"
+}
+
 # Obtener lista de archivos para un tipo (rules, workflows, prompts)
 get_source_files() {
     local type="$1"
@@ -117,6 +182,8 @@ write_sync_file() {
         printf '%s\n' "${content}" > "${final_path}"
         log_info "  → ${final_path}"
     fi
+
+    register_managed_file "${final_path}"
 }
 
 # Transformar frontmatter para agentes que lo requieran (e.g. Cursor .mdc)
@@ -270,12 +337,17 @@ sync_directory_impl() {
                 mkdir -p "${dest_file_dir}"
                 cp "${src_file}" "${dest_file}"
                 log_debug "  → ${dest_file}"
+                register_managed_file "${dest_file}"
             done < <(find "${source_dir}" -type f 2>/dev/null)
 
-            if [[ "${changed}" == "true" ]]; then
-                log_info "  → ${dest_dir}/"
-            else
+            if [[ "${changed}" != "true" ]]; then
                 log_debug "  Sin cambios: ${dest_dir}/"
+                # Register existing files even if unchanged
+                while IFS= read -r existing_file; do
+                    register_managed_file "${existing_file}"
+                done < <(find "${dest_dir}" -type f 2>/dev/null)
+            else
+                log_info "  → ${dest_dir}/"
             fi
         done <<< "${target_paths}"
     done < <(get_source_skill_dirs)
